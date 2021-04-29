@@ -11,7 +11,7 @@ expr: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
 add_expr: expr (ADD_OP expr)* ; 
 mult_expr: expr (MULT_OP expr)* ;
 PRINT: 'print' ;
-ASSIGN: '=' ;
+EQUAL: '=' ;
 LPAREN: '(' ;
 RPAREN: ')' ; 
 ADD_OP: '+' | '-' ;
