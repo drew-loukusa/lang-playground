@@ -2,11 +2,12 @@ from enum import Enum, auto
 class Tokens(Enum):
     SEMI_COLON = auto()
     EQUAL = auto()
-    PRINT = auto()    
     LPAREN = auto()
     RPAREN = auto()
-    ADD_OP = auto()
-    MULT_OP = auto()
+    PLUS = auto()
+    MINUS = auto()
+    STAR = auto()
+    FSLASH = auto()
     NUMBER = auto()
     NAME = auto()
     INVALID_TOKEN_TYPE = 0

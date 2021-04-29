@@ -8,21 +8,25 @@
 program: statement * ;
 
 statement: print_stat | assign_stat | expr_stat ; 
-print_stat: PRINT LPAREN expr RPAREN SEMI_COLON ;
+print_stat: 'print' LPAREN expr RPAREN SEMI_COLON ;
 assign_stat: NAME ASSIGN expr SEMI_COLON ; 
 expr_stat: expr SEMI_COLON ;
 
 expr: ( add_expr | (LPAREN add_expr RPAREN)) ; 
-add_expr: mult_expr (ADD_OP mult_expr)* ; 
-mult_expr: atom (MULT_OP atom)* ;
+add_expr: mult_expr (add_op mult_expr)* ; 
+mult_expr: atom (mult_op atom)* ;
 atom: NAME | NUMBER | expr;
 
-PRINT: 'print' ;
+add_op: PLUS | MINUS ;
+mult_op: STAR | FSLASH ;
+
+PLUS: '+' ;
+MINUS: '-' ;
+STAR: '*' ; 
+FSLASH: '/' ; 
 SEMI_COLON: ';' ; 
 EQUAL: '=' ;
 LPAREN: '(' ;
-RPAREN: ')' ; 
-ADD_OP: '+' | '-' ;
-MULT_OP: '*' | '/' ; 
+RPAREN: ')' ;  
 NUMBER: ('0' .. '9')+ ; 
 NAME : ('a'..'z' |'A'..'Z')+ ;

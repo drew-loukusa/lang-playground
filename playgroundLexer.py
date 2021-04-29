@@ -44,14 +44,16 @@ class PlaygroundLexer(Lexer):
                 )
 
             elif self.c in ['+', '-']:
+                token_type = Tokens.PLUS if self.c == '+' else Tokens.MINUS
                 return Token(
-                    token_type=Tokens.ADD_OP,
+                    token_type=token_type,
                     token_text=self.consume()
                 )
             
             elif self.c in ['*', '/']:
+                token_type = Tokens.STAR if self.c == '*' else Tokens.FSLASH
                 return Token(
-                    token_type=Tokens.MULT_OP,
+                    token_type=token_type,
                     token_text=self.consume()
                 )
 
@@ -95,7 +97,7 @@ class PlaygroundLexer(Lexer):
         )
 
 if __name__ == "__main__":
-    input_str = "1 + 2 - 3 * ( 4 / A ) + foo;"
+    input_str = "+-*/ = 1 11 a ab a AB ()"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != Tokens.EOF:
