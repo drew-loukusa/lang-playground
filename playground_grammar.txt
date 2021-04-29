@@ -12,7 +12,7 @@ print_stat: 'print' LPAREN expr RPAREN SEMI_COLON ;
 assign_stat: NAME ASSIGN expr SEMI_COLON ; 
 expr_stat: expr SEMI_COLON ;
 
-expr: ( add_expr | (LPAREN add_expr RPAREN)) ; 
+expr: ((LPAREN add_expr RPAREN) | add_expr ) ; 
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
 atom: NAME | NUMBER | expr;
