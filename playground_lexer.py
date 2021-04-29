@@ -1,4 +1,4 @@
-from token import Tokens, Token
+from token import PlaygroundTokens as PGT, Token
 from lexer import Lexer
 
 class PlaygroundLexer(Lexer):
@@ -21,37 +21,37 @@ class PlaygroundLexer(Lexer):
         
             elif self.c == ';':
                 return Token(
-                    token_type=Tokens.SEMI_COLON,
+                    token_type=PGT.SEMI_COLON,
                     token_text=self.consume()
                 )
                 
             elif self.c == '=':
                 return Token(
-                    token_type=Tokens.EQUAL, 
+                    token_type=PGT.EQUAL, 
                     token_text=self.consume()
                 )
             
             elif self.c == '(':
                 return Token(
-                    token_type=Tokens.LPAREN,
+                    token_type=PGT.LPAREN,
                     token_text=self.consume()
                 )
 
             elif self.c == ')':
                 return Token(
-                    token_type=Tokens.RPAREN,
+                    token_type=PGT.RPAREN,
                     token_text=self.consume()
                 )
 
             elif self.c in ['+', '-']:
-                token_type = Tokens.PLUS if self.c == '+' else Tokens.MINUS
+                token_type = PGT.PLUS if self.c == '+' else PGT.MINUS
                 return Token(
                     token_type=token_type,
                     token_text=self.consume()
                 )
             
             elif self.c in ['*', '/']:
-                token_type = Tokens.STAR if self.c == '*' else Tokens.FSLASH
+                token_type = PGT.STAR if self.c == '*' else PGT.FSLASH
                 return Token(
                     token_type=token_type,
                     token_text=self.consume()
@@ -67,7 +67,7 @@ class PlaygroundLexer(Lexer):
                 raise Exception(f"Invalid character: {self.c}")
         
         return Token(
-            token_type=Tokens.EOF, 
+            token_type=PGT.EOF, 
             token_text="<EOF>"
         )
     
@@ -83,7 +83,7 @@ class PlaygroundLexer(Lexer):
         while self.isLetter():
             buf += self.consume()
         return Token(
-            token_type=Tokens.NAME,
+            token_type=PGT.NAME,
             token_text=buf
         )
 
@@ -92,7 +92,7 @@ class PlaygroundLexer(Lexer):
         while self.isNumber():
             buf += self.consume()
         return Token(
-            token_type=Tokens.NUMBER,
+            token_type=PGT.NUMBER,
             token_text=buf
         )
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     input_str = "+-*/ = 1 11 a ab a AB ()"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
-    while token.type != Tokens.EOF:
+    while token.type != PGT.EOF:
         print(token)
         token = lexer.next_token()
     print(token)
