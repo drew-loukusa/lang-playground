@@ -1,5 +1,5 @@
 from enum import Enum, auto
-class Tokens(Enum):
+class PlaygroundTokens(Enum):
     SEMI_COLON = auto()
     EQUAL = auto()
     LPAREN = auto()
@@ -14,7 +14,7 @@ class Tokens(Enum):
     EOF = -1 
 
 class Token:
-    def __init__(self, token_type = Tokens.INVALID_TOKEN_TYPE, token_text = ""):
+    def __init__(self, token_type = PlaygroundTokens.INVALID_TOKEN_TYPE, token_text = ""):
         self.type = token_type
         self.text = token_text
     
@@ -22,5 +22,5 @@ class Token:
         return "<" + str(self.type) + " '" + str(self.text) + "'>"
 
 if __name__ == "__main__":
-    for k,v in Tokens.__members__.items():
+    for k,v in PlaygroundTokens.__members__.items():
         print(k,v, v.value)
