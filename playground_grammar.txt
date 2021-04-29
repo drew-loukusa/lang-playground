@@ -1,0 +1,20 @@
+# Simple grammar for adding numbers and printing the results of adding numbers
+
+# A grammar for doing simple math
+# Can do addition and mutliplication
+# Can assign value of math expressions to variables
+# Can print the result of an expression or variable
+
+print_expr: PRINT LPAREN expr RPAREN ;
+assign_expr: NAME ASSIGN expr ; 
+expr: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
+add_expr: expr (ADD_OP expr)* ; 
+mult_expr: expr (MULT_OP expr)* ;
+PRINT: 'print' ;
+ASSIGN: '=' ;
+LPAREN: '(' ;
+RPAREN: ')' ; 
+ADD_OP: '+' | '-' ;
+MULT_OP: '*' | '/' ; 
+NUMBER: ('0' .. '9')+ ; 
+NAME : ('a'..'z' |'A'..'Z')+ ;
