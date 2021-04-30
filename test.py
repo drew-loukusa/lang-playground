@@ -26,12 +26,17 @@ class TestPlayGroundParser:
 
     def test_add_expr5(self):
         with pytest.raises(ParsingError):
-            self.run_pg_parser("5 + ")
+            self.run_pg_parser("5 + + ")
 
     def test_paren_expr1(self):
         with pytest.raises(ParsingError):
             self.run_pg_parser("(5 + )) * 3;")
+
+    def test_paren_expr2(self):
+        with pytest.raises(ParsingError):
+            self.run_pg_parser("(5 + 3)) * 3;")
     
+    # Test what parser should be able to parse 
     def test_can_parse(self):
         input_str = """
                 5 + 5;
@@ -44,6 +49,7 @@ class TestPlayGroundParser:
                 a * a - a;
                 foo + foo * bar;
                 (5 + 5) * foo;
+                (5 + (5 + (5 + 5) + 5)) + 5;
                 goo = 5;
                 goo = bar;
                 goo = 5 + 5;
