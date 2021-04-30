@@ -1,3 +1,6 @@
+class ParsingError(Exception):
+    pass
+
 class Parser:
     def __init__(self, input_lexer, k=1):
         self.input = input_lexer
@@ -21,7 +24,7 @@ class Parser:
         if self.LA(1) == x: # x is token_type 
             self.consume()
         else:
-            raise Exception(f"Expecting {self.input.getTokenName(x)}; found {self.LT(1)}")            
+            raise ParsingError(f"Expecting {x}; found {self.LT(1)} on line {self.input.line_number}")            
     
     # Lookahead sequence is:
     def LA_SEQ_IS(self, *token_type_sequence):
@@ -30,7 +33,8 @@ class Parser:
             msg = "Length of token sequence to be checked greater than the lookahead"
             msg += "set for this parser. Increase this parsers k value, or modify this token sequence length."
             msg += f"Current k value: {self.k}, Token Type Sequence: {token_type_sequence}"
-            raise Exception()
+            raise ParsingError(msg)
+
         for i, token_type in enumerate(token_type_sequence):
             if not self.LA(i) == token_type:
                 return False 

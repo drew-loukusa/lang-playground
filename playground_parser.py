@@ -1,6 +1,7 @@
-from token import PlaygroundTokens as PGT
-from abstract_parser import Parser 
+from token_def import PlaygroundTokens as PGT
 from playground_lexer import PlaygroundLexer
+from abstract_parser import Parser, ParsingError
+
 class PlaygroundParser(Parser):
     def __init__(self, input_str):
         super().__init__(
@@ -24,9 +25,10 @@ class PlaygroundParser(Parser):
 
         elif self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER}:
             self.expr()
+            self.match(PGT.SEMI_COLON)
 
         else: 
-            raise Exception(f"Expecting a statement; found {self.LT(1)}")
+            raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
 
     def pg_print(self):
         self.match(PGT.NAME)
@@ -51,11 +53,11 @@ class PlaygroundParser(Parser):
             self.add_expr()
 
         else: 
-            raise Exception(f"Expecting an expression; found {self.LT(1)}")
+            raise ParsingError(f"Expecting an expression; found {self.LT(1)} on line {self.input.line_number}")
 
     def add_expr(self): 
         if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
-            raise Exception(f"Expecting an add expression; found {self.LT(1)}")
+            raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         
         self.mult_expr()
 
@@ -65,7 +67,7 @@ class PlaygroundParser(Parser):
 
     def mult_expr(self):
         if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
-            raise Exception(f"Expecting an add expression; found {self.LT(1)}")
+            raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
 
         self.atom()
 
@@ -81,7 +83,7 @@ class PlaygroundParser(Parser):
         elif self.LA(1) in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
             self.expr()
         else: 
-            raise Exception(f"Expecting an atom; found {self.LT(1)}")
+            raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
 
     def add_op(self):
         if self.LA(1) == PGT.PLUS:
@@ -89,7 +91,7 @@ class PlaygroundParser(Parser):
         elif self.LA(1) == PGT.MINUS:
             self.match(PGT.MINUS)
         else: 
-            raise Exception(f"Expecting an add op ('+' or '-'); found {self.LT(1)}")
+            raise ParsingError(f"Expecting an add op ('+' or '-'); found {self.LT(1)} on line {self.input.line_number}")
 
     def mult_op(self):
         if self.LA(1) == PGT.STAR:
@@ -97,32 +99,30 @@ class PlaygroundParser(Parser):
         elif self.LA(1) == PGT.FSLASH:
             self.match(PGT.FSLASH)
         else: 
-            raise Exception(f"Expecting an mult op ('*' or '/'); found {self.LT(1)}") 
+            raise ParsingError(f"Expecting an mult op ('*' or '/'); found {self.LT(1)} on line {self.input.line_number}") 
 
 if __name__ == "__main__":
+    # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
-5 + 5;
-10 + 10;
-5 - 5;
-5 * 5;
-5 / 5; 
-5 + 5 * 5;
-5 * 5 + 5;
-a * a - a;
-foo + foo * bar;
-(5 + 5) * foo;
-goo = 5;
-goo = bar;
-goo = 5 + 5;
-goo = (5 + 5);
-goo = (5 + 5) * 5;
-print(5);
-print(goo);
-print(5 + 5);
-print(a + a); 
-print(5 * (3 + 2));
-"""
-    PlaygroundParser(input_str=input_str).program()
-
-    input_str = "5 + 5"
+                5 + 5;
+                10 + 10;
+                5 - 5;
+                5 * 5;
+                5 / 5; 
+                5 + 5 * 5;
+                5 * 5 + 5;
+                a * a - a;
+                foo + foo * bar;
+                (5 + 5) * foo;
+                goo = 5;
+                goo = bar;
+                goo = 5 + 5;
+                goo = (5 + 5);
+                goo = (5 + 5) * 5;
+                print(5);
+                print(goo);
+                print(5 + 5);
+                print(a + a); 
+                print(5 * (3 + 2));
+                """
     PlaygroundParser(input_str=input_str).program()

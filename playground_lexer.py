@@ -1,4 +1,4 @@
-from token import PlaygroundTokens as PGT, Token
+from token_def import PlaygroundTokens as PGT, Token
 from lexer import Lexer
 
 class PlaygroundLexer(Lexer):
