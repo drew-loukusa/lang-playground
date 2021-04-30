@@ -7,6 +7,8 @@ class Lexer:
         self.p = 0
         self.c = self.input[self.p]
 
+        self.line_number = 0
+
     def consume(self) -> str:
         """ 
             Increments self.c to the next to the next char in the input string.
@@ -23,6 +25,8 @@ class Lexer:
     def _WS(self):
         """ Consumes whitespace until a non-whitespace char is encountered. """
         while self.c in [' ','\t','\n','\r']: 
+            if self.c == '\n': 
+                self.line_number += 1 
             self.consume()
     
     def _comment(self):
