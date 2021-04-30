@@ -1,5 +1,7 @@
 class ParsingError(Exception):
-    pass
+    def __init__(self, message=""):
+        self.message = message
+        super().__init__(self.message)
 
 class Parser:
     def __init__(self, input_lexer, k=1):
