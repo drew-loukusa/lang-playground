@@ -8,6 +8,7 @@ class PlaygroundParser(Parser):
             input_lexer=PlaygroundLexer(input_str),
             k=2
         )
+        self.testing = False 
 
     def program(self): 
         try:
@@ -19,6 +20,10 @@ class PlaygroundParser(Parser):
                 raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
         except ParsingError as pe:
             print("Syntax Error:", pe)
+
+            # If tests are being run, re-raise exception
+            if self.testing:
+                raise pe 
 
     def statement(self):
 

@@ -3,7 +3,9 @@ from playground_parser import PlaygroundParser, ParsingError
 
 class TestPlayGroundParser:
     def run_pg_parser(self, input_str):
-        PlaygroundParser(input_str=input_str).program()
+        pgp = PlaygroundParser(input_str=input_str)
+        pgp.testing = True 
+        pgp.program()
         
     # Test that parsing fails with bad input 
     def test_add_expr1(self):
@@ -25,6 +27,10 @@ class TestPlayGroundParser:
     def test_add_expr5(self):
         with pytest.raises(ParsingError):
             self.run_pg_parser("5 + ")
+
+    def test_paren_expr1(self):
+        with pytest.raises(ParsingError):
+            self.run_pg_parser("(5 + )) * 3;")
     
     def test_can_parse(self):
         input_str = """
