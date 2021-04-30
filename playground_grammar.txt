@@ -10,12 +10,11 @@ program: statement * ;
 statement: print_stat | assign_stat | expr_stat ; 
 print_stat: 'print' LPAREN expr RPAREN SEMI_COLON ;
 assign_stat: NAME ASSIGN expr SEMI_COLON ; 
-expr_stat: expr SEMI_COLON ;
+expr_stat: add_expr SEMI_COLON ;
 
-expr: ((LPAREN add_expr RPAREN) | add_expr ) ; 
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
-atom: NAME | NUMBER | expr;
+atom: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
 
 add_op: PLUS | MINUS ;
 mult_op: STAR | FSLASH ;
