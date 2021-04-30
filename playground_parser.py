@@ -10,9 +10,15 @@ class PlaygroundParser(Parser):
         )
 
     def program(self): 
-        while self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER} or \
-            self.LT(1).text == 'print':
-            self.statement()
+        try:
+            while self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER} or \
+                self.LT(1).text == 'print':
+                self.statement()
+            
+            if self.LA(1) != PGT.EOF:
+                raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
+        except ParsingError as pe:
+            print("Syntax Error:", pe)
 
     def statement(self):
 
@@ -20,11 +26,11 @@ class PlaygroundParser(Parser):
         if self.LA(1) == PGT.NAME and self.LT(1).text == 'print':
             self.pg_print()
 
-        elif self.LA_SEQ_IS( PGT.NAME, PGT.EQUAL ):
+        elif self.LA(1) == PGT.NAME and self.LA(2) == PGT.EQUAL:
             self.assign()
 
         elif self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER}:
-            self.expr()
+            self.add_expr()
             self.match(PGT.SEMI_COLON)
 
         else: 
@@ -33,27 +39,15 @@ class PlaygroundParser(Parser):
     def pg_print(self):
         self.match(PGT.NAME)
         self.match(PGT.LPAREN)
-        self.expr()
+        self.add_expr()
         self.match(PGT.RPAREN)
         self.match(PGT.SEMI_COLON)
     
     def assign(self):
         self.match(PGT.NAME)
         self.match(PGT.EQUAL)
-        self.expr()
+        self.add_expr()
         self.match(PGT.SEMI_COLON)
-
-    def expr(self):
-        if self.LA(1) == PGT.LPAREN:
-            self.match(PGT.LPAREN)
-            self.add_expr()
-            self.match(PGT.RPAREN)
-        
-        elif self.LA(1) in { PGT.NAME, PGT.NUMBER }:
-            self.add_expr()
-
-        else: 
-            raise ParsingError(f"Expecting an expression; found {self.LT(1)} on line {self.input.line_number}")
 
     def add_expr(self): 
         if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
@@ -80,8 +74,10 @@ class PlaygroundParser(Parser):
             self.match(PGT.NAME)
         elif self.LA(1) == PGT.NUMBER:
             self.match(PGT.NUMBER)
-        elif self.LA(1) in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
-            self.expr()
+        elif self.LA(1) == PGT.LPAREN:
+            self.match(PGT.LPAREN)
+            self.add_expr()
+            self.match(PGT.RPAREN)
         else: 
             raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
 
@@ -126,3 +122,4 @@ if __name__ == "__main__":
                 print(5 * (3 + 2));
                 """
     PlaygroundParser(input_str=input_str).program()
+    PlaygroundParser(input_str="5 + 5").program()
