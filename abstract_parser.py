@@ -1,3 +1,5 @@
+from abstract_syntax_tree import AST
+
 class ParsingError(Exception):
     def __init__(self, message=""):
         self.message = message
@@ -13,31 +15,24 @@ class AbstractParser:
             self.lookahead.append(self.input.next_token())
 
     def consume(self):
+        """ Increments the lookahead token buffer by 1 token """
         self.lookahead[self.p] = self.input.next_token()
         self.p = (self.p+1) % self.k 
 
-    def LT(self, i):         
+    def LT(self, i):     
+        """ Returns the i'th lookahead token """    
         return self.lookahead[(self.p + i - 1) % self.k] # Circular fetch
     
-    def LA(self, i): return self.LT(i).type 
+    def LA(self, i): 
+        """ Returns type of the i'th lookahead token """ 
+        return self.LT(i).type 
 
     def match(self, x):
-        """ Accepts token type as a Tokens enum attribute """
+        """ Accepts token type as a Tokens enum attribute 
+            Returns an AST node """
         if self.LA(1) == x: # x is token_type 
+            node = AST(self.LT(1))
             self.consume()
+            return node 
         else:
-            raise ParsingError(f"Expecting {x}; found {self.LT(1)} on line {self.input.line_number}")            
-    
-    # Lookahead sequence is:
-    def LA_SEQ_IS(self, *token_type_sequence):
-        """ Sequentially checks if the lookahead tokens match a given sequence."""
-        if len(token_type_sequence) > self.k: 
-            msg = "Length of token sequence to be checked greater than the lookahead"
-            msg += "set for this parser. Increase this parsers k value, or modify this token sequence length."
-            msg += f"Current k value: {self.k}, Token Type Sequence: {token_type_sequence}"
-            raise ParsingError(msg)
-
-        for i, token_type in enumerate(token_type_sequence):
-            if not self.LA(i) == token_type:
-                return False 
-        return True 
+            raise ParsingError(f"Expecting {x}; found {self.LT(1)} on line {self.input.line_number}")
