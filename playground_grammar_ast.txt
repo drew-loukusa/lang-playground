@@ -1,0 +1,22 @@
+# This grammar file has been modified to indicate what
+# Elements of rules should be root nodes.
+# Some rules use a re-write notation created for ANTLR
+# The re-write allows you to discard unneeded lexical tokens
+
+program: ^ $PROGRAM statement * ;
+
+statement: ^ ( print_stat 
+            | assign_stat 
+            | expr_stat ) 
+            ; 
+
+print_stat: 'print' LPAREN expr RPAREN SEMI_COLON   -> ^( 'print' expr ) ;
+assign_stat: NAME ASSIGN expr SEMI_COLON            -> ^( '=' NAME expr ) ; 
+expr_stat: add_expr SEMI_COLON                      -> ^( add_expr ) ;
+
+add_expr: mult_expr ( ^ add_op mult_expr)* ; 
+mult_expr: atom ( ^ mult_op atom)* ;
+atom: NAME | NUMBER | (LPAREN add_expr RPAREN) -> ^( NAME | NUMBER | add_expr ) ;
+
+add_op: ^ ( PLUS | MINUS );
+mult_op: ^ ( STAR | FSLASH );
