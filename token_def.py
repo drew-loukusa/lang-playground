@@ -13,10 +13,10 @@ class PlaygroundTokens(Enum):
     INVALID_TOKEN_TYPE = 0
     EOF = -1 
 
-class Token:
+class AbstractToken:
     def __init__(
             self, 
-            token_type = PlaygroundTokens.INVALID_TOKEN_TYPE, 
+            token_type = None, 
             token_text = ""
         ):
 
