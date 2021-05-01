@@ -1,4 +1,4 @@
-from token_def import Token
+from token_def import AbstractToken
 
 class AST:
 
@@ -8,11 +8,14 @@ class AST:
         self.token = token  # From which token did we create node?
         self.children = []  # normalized list of AST nodes
 
-        if token_type: self.token = Token(token_type, token_text, token_name)
+        if token_type: 
+            self.token = Token(token_type, token_text, token_name)
 
-    def isNone(self): return self.token is None 
+    def isNone(self): 
+        return self.token is None 
 
-    def addChild(self, t): self.children.append(t)
+    def addChild(self, t): 
+        self.children.append(t)
 
     def toString(self):
         foo = str(self.token) if self.token is not None else "None"

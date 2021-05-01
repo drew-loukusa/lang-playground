@@ -1,4 +1,4 @@
-class Lexer:
+class AbstractLexer:
     def __init__(self, input_str):
         self.EOF = chr(0)
         self.EOF_TYPE = -1

@@ -1,14 +1,14 @@
 from token_def import PlaygroundTokens as PGT
 from playground_lexer import PlaygroundLexer
-from abstract_parser import Parser, ParsingError
+from abstract_parser import AbstractParser, ParsingError
 
-class PlaygroundParser(Parser):
+class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
         super().__init__(
             input_lexer=PlaygroundLexer(input_str),
             k=2
         )
-        self.testing = False 
+        self.testing = False
 
     def program(self): 
         try:
@@ -127,4 +127,3 @@ if __name__ == "__main__":
                 print(5 * (3 + 2));
                 """
     PlaygroundParser(input_str=input_str).program()
-    PlaygroundParser(input_str="5 + 5").program()

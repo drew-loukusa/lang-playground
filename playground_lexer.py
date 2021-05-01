@@ -1,7 +1,7 @@
-from token_def import PlaygroundTokens as PGT, Token
-from abstract_lexer import Lexer
+from token_def import PlaygroundTokens as PGT, AbstractToken as Token
+from abstract_lexer import AbstractLexer
 
-class PlaygroundLexer(Lexer):
+class PlaygroundLexer(AbstractLexer):
     def __init__(self, input_str):
         super().__init__(input_str)
     

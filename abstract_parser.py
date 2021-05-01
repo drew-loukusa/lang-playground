@@ -3,9 +3,9 @@ class ParsingError(Exception):
         self.message = message
         super().__init__(self.message)
 
-class Parser:
+class AbstractParser:
     def __init__(self, input_lexer, k=1):
-        self.input = input_lexer
+        self.input = input_lexer # A lexer with method nextToken() defined
         self.k = k              # How many lookahead tokens
         self.p = 0              # Circular index of next token positon to fill
         self.lookahead = []     # Circular lookahead buffer 
