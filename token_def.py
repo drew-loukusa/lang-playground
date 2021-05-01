@@ -14,7 +14,12 @@ class PlaygroundTokens(Enum):
     EOF = -1 
 
 class Token:
-    def __init__(self, token_type = PlaygroundTokens.INVALID_TOKEN_TYPE, token_text = ""):
+    def __init__(
+            self, 
+            token_type = PlaygroundTokens.INVALID_TOKEN_TYPE, 
+            token_text = ""
+        ):
+
         self.type = token_type
         self.text = token_text
     

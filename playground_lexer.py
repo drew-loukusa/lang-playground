@@ -1,5 +1,5 @@
 from token_def import PlaygroundTokens as PGT, Token
-from lexer import Lexer
+from abstract_lexer import Lexer
 
 class PlaygroundLexer(Lexer):
     def __init__(self, input_str):
