@@ -7,6 +7,9 @@ class AST:
         self.token = token  # From which token did we create node?
         self.children = []  # normalized list of AST nodes
         self.artificial = artificial
+    
+    def __repr__(self):
+        return self.to_string()
 
     def is_none(self): 
         return self.token is None 
@@ -19,13 +22,13 @@ class AST:
             self.children.append(child)
 
     def to_string(self):
-        foo = str(self.token) if self.token is not None else "None"
-        foo = self.name + str(self.token) if self.name is not None else foo 
+        token = str(self.token) if self.token is not None else None
+        artificial = self.name + " " if self.name is not None else None
 
         if self.artificial: 
-            foo = 'ARTIFICIAL - ' + foo 
+            return 'ARTIFICIAL - ' + artificial
 
-        return foo
+        return token
 
     def to_string_tree(self, tab=0):
         if len(self.children) == 0: 

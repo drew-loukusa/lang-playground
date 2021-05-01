@@ -20,6 +20,7 @@ class PlaygroundParser(AbstractParser):
             
             if self.LA(1) != PGT.EOF:
                 raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
+            return root 
         except ParsingError as pe:
             print("Syntax Error:", pe)
 
@@ -78,8 +79,8 @@ class PlaygroundParser(AbstractParser):
             right = self.mult_expr()
             root.add_children(left, right)
         
-        return root 
-
+        return root if root != None else left
+        
     def mult_expr(self):
         if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
@@ -99,7 +100,7 @@ class PlaygroundParser(AbstractParser):
             right = self.atom()
             root.add_children(left, right)
 
-        return root 
+        return root if root != None else left
 
     def atom(self):
         root = None 
@@ -159,4 +160,5 @@ if __name__ == "__main__":
                 print(a + a); 
                 print(5 * (3 + 2));
                 """
-    PlaygroundParser(input_str=input_str).program()
+    AST = PlaygroundParser(input_str=input_str).program()
+    AST.to_string_tree()
