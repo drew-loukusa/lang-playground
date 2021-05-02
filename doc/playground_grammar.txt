@@ -1,0 +1,31 @@
+# Simple grammar for adding numbers and printing the results of adding numbers
+
+# A grammar for doing simple math
+# Can do addition and mutliplication
+# Can assign value of math expressions to variables
+# Can print the result of an expression or variable
+
+program: statement * ;
+
+statement: print_stat | assign_stat | expr_stat ; 
+print_stat: 'print' LPAREN expr RPAREN SEMI_COLON ;
+assign_stat: NAME ASSIGN expr SEMI_COLON ; 
+expr_stat: add_expr SEMI_COLON ;
+
+add_expr: mult_expr (add_op mult_expr)* ; 
+mult_expr: atom (mult_op atom)* ;
+atom: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
+
+add_op: PLUS | MINUS ;
+mult_op: STAR | FSLASH ;
+
+PLUS: '+' ;
+MINUS: '-' ;
+STAR: '*' ; 
+FSLASH: '/' ; 
+SEMI_COLON: ';' ; 
+EQUAL: '=' ;
+LPAREN: '(' ;
+RPAREN: ')' ;  
+NUMBER: ('0' .. '9')+ ; 
+NAME : ('a'..'z' |'A'..'Z')+ ;

@@ -1,5 +1,5 @@
-from abstract_syntax_tree import AST
-from abstract_parser import AbstractParser, ParsingError
+from base.abstract_syntax_tree import AST
+from base.abstract_parser import AbstractParser, ParsingError
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
