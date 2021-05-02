@@ -1,11 +1,11 @@
-from token_def import PlaygroundTokens as PGT, AbstractToken as Token
+from playground_token import PG_Type, PG_Token
 from abstract_lexer import AbstractLexer
 
 class PlaygroundLexer(AbstractLexer):
     def __init__(self, input_str):
         super().__init__(input_str)
     
-    def next_token(self) -> Token:
+    def next_token(self) -> PG_Token:
         """ Returns the next char in the input string as a Token. 
             If there is no next char, returns <EOF> (End of File) """
         while self.c != self.EOF:
@@ -20,39 +20,39 @@ class PlaygroundLexer(AbstractLexer):
                 continue
         
             elif self.c == ';':
-                return Token(
-                    token_type=PGT.SEMI_COLON,
+                return PG_Token(
+                    token_type=PG_Type.SEMI_COLON,
                     token_text=self.consume()
                 )
                 
             elif self.c == '=':
-                return Token(
-                    token_type=PGT.EQUAL, 
+                return PG_Token(
+                    token_type=PG_Type.EQUAL, 
                     token_text=self.consume()
                 )
             
             elif self.c == '(':
-                return Token(
-                    token_type=PGT.LPAREN,
+                return PG_Token(
+                    token_type=PG_Type.LPAREN,
                     token_text=self.consume()
                 )
 
             elif self.c == ')':
-                return Token(
-                    token_type=PGT.RPAREN,
+                return PG_Token(
+                    token_type=PG_Type.RPAREN,
                     token_text=self.consume()
                 )
 
             elif self.c in ['+', '-']:
-                token_type = PGT.PLUS if self.c == '+' else PGT.MINUS
-                return Token(
+                token_type = PG_Type.PLUS if self.c == '+' else PG_Type.MINUS
+                return PG_Token(
                     token_type=token_type,
                     token_text=self.consume()
                 )
             
             elif self.c in ['*', '/']:
-                token_type = PGT.STAR if self.c == '*' else PGT.FSLASH
-                return Token(
+                token_type = PG_Type.STAR if self.c == '*' else PG_Type.FSLASH
+                return PG_Token(
                     token_type=token_type,
                     token_text=self.consume()
                 )
@@ -66,8 +66,8 @@ class PlaygroundLexer(AbstractLexer):
             else:
                 raise Exception(f"Invalid character: {self.c}")
         
-        return Token(
-            token_type=PGT.EOF, 
+        return PG_Token(
+            token_type=PG_Type.EOF, 
             token_text="<EOF>"
         )
     
@@ -82,8 +82,8 @@ class PlaygroundLexer(AbstractLexer):
         buf = self.consume()
         while self.isLetter():
             buf += self.consume()
-        return Token(
-            token_type=PGT.NAME,
+        return PG_Token(
+            token_type=PG_Type.NAME,
             token_text=buf
         )
 
@@ -91,8 +91,8 @@ class PlaygroundLexer(AbstractLexer):
         buf = self.consume()
         while self.isNumber():
             buf += self.consume()
-        return Token(
-            token_type=PGT.NUMBER,
+        return PG_Token(
+            token_type=PG_Type.NUMBER,
             token_text=buf
         )
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     input_str = "+-*/ = 1 11 a ab a AB ()"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
-    while token.type != PGT.EOF:
+    while token.type != PG_Type.EOF:
         print(token)
         token = lexer.next_token()
     print(token)

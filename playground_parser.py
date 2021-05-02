@@ -1,7 +1,7 @@
 from abstract_syntax_tree import AST
-from token_def import PlaygroundTokens as PGT
-from playground_lexer import PlaygroundLexer
 from abstract_parser import AbstractParser, ParsingError
+from playground_token import PG_Type
+from playground_lexer import PlaygroundLexer
 
 class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
@@ -14,11 +14,11 @@ class PlaygroundParser(AbstractParser):
     def program(self): 
         root = AST(artificial=True, name="$PROGRAM")
         try:
-            while self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER} or \
+            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER} or \
                 self.LT(1).text == 'print':
                 root.add_child(self.statement())
             
-            if self.LA(1) != PGT.EOF:
+            if self.LA(1) != PG_Type.EOF:
                 raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
             return root 
         except ParsingError as pe:
@@ -32,15 +32,15 @@ class PlaygroundParser(AbstractParser):
 
         root = None 
         # Parse built in print function 
-        if self.LA(1) == PGT.NAME and self.LT(1).text == 'print':
+        if self.LA(1) == PG_Type.NAME and self.LT(1).text == 'print':
             root = self.pg_print()
 
-        elif self.LA(1) == PGT.NAME and self.LA(2) == PGT.EQUAL:
+        elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
             root = self.assign()
 
-        elif self.LA(1) in {PGT.LPAREN, PGT.NAME, PGT.NUMBER}:
+        elif self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER}:
             root = self.add_expr()
-            self.match(PGT.SEMI_COLON)
+            self.match(PG_Type.SEMI_COLON)
 
         else: 
             raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
@@ -48,31 +48,31 @@ class PlaygroundParser(AbstractParser):
         return root 
 
     def pg_print(self):
-        root = self.match(PGT.NAME)
-        self.match(PGT.LPAREN)
+        root = self.match(PG_Type.NAME)
+        self.match(PG_Type.LPAREN)
         expr = self.add_expr()
-        self.match(PGT.RPAREN)
-        self.match(PGT.SEMI_COLON)
+        self.match(PG_Type.RPAREN)
+        self.match(PG_Type.SEMI_COLON)
 
         root.add_child(expr)
         return root 
     
     def assign(self):
-        name = self.match(PGT.NAME)
-        root = self.match(PGT.EQUAL)
+        name = self.match(PG_Type.NAME)
+        root = self.match(PG_Type.EQUAL)
         expr = self.add_expr()
-        self.match(PGT.SEMI_COLON)
+        self.match(PG_Type.SEMI_COLON)
 
         root.add_children(name, expr)
         return root 
 
     def add_expr(self): 
-        if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
+        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
         left = self.mult_expr()
 
-        while self.LA(1) in { PGT.PLUS, PGT.MINUS }:
+        while self.LA(1) in { PG_Type.PLUS, PG_Type.MINUS }:
             if root != None:
                 left = root 
             root = self.add_op()
@@ -82,13 +82,13 @@ class PlaygroundParser(AbstractParser):
         return root if root != None else left
         
     def mult_expr(self):
-        if self.LA(1) not in { PGT.LPAREN, PGT.NAME, PGT.NUMBER }:
+        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         
         root = None 
         left = self.atom() 
 
-        while self.LA(1) in { PGT.STAR, PGT.FSLASH }:
+        while self.LA(1) in { PG_Type.STAR, PG_Type.FSLASH }:
             # Root can be set if we're parsing a continuous string of 
             # multiplications:
             # 2 * 2 * 2
@@ -104,34 +104,34 @@ class PlaygroundParser(AbstractParser):
 
     def atom(self):
         root = None 
-        if self.LA(1) == PGT.NAME:
-            root = self.match(PGT.NAME)
-        elif self.LA(1) == PGT.NUMBER:
-            root = self.match(PGT.NUMBER)
-        elif self.LA(1) == PGT.LPAREN:
-            self.match(PGT.LPAREN)
+        if self.LA(1) == PG_Type.NAME:
+            root = self.match(PG_Type.NAME)
+        elif self.LA(1) == PG_Type.NUMBER:
+            root = self.match(PG_Type.NUMBER)
+        elif self.LA(1) == PG_Type.LPAREN:
+            self.match(PG_Type.LPAREN)
             root = self.add_expr()
-            self.match(PGT.RPAREN)
+            self.match(PG_Type.RPAREN)
         else: 
             raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
         return root 
 
     def add_op(self):
         root = None 
-        if self.LA(1) == PGT.PLUS:
-            root = self.match(PGT.PLUS)
-        elif self.LA(1) == PGT.MINUS:
-            root = self.match(PGT.MINUS)
+        if self.LA(1) == PG_Type.PLUS:
+            root = self.match(PG_Type.PLUS)
+        elif self.LA(1) == PG_Type.MINUS:
+            root = self.match(PG_Type.MINUS)
         else: 
             raise ParsingError(f"Expecting an add op ('+' or '-'); found {self.LT(1)} on line {self.input.line_number}")
         return root 
 
     def mult_op(self):
         root = None
-        if self.LA(1) == PGT.STAR:
-            root = self.match(PGT.STAR)
-        elif self.LA(1) == PGT.FSLASH:
-            root = self.match(PGT.FSLASH)
+        if self.LA(1) == PG_Type.STAR:
+            root = self.match(PG_Type.STAR)
+        elif self.LA(1) == PG_Type.FSLASH:
+            root = self.match(PG_Type.FSLASH)
         else: 
             raise ParsingError(f"Expecting an mult op ('*' or '/'); found {self.LT(1)} on line {self.input.line_number}") 
         return root 

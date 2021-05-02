@@ -1,7 +1,4 @@
-from token_def import AbstractToken
-
 class AST:
-
     def __init__(self, token=None, artificial=False, name=None):
         self.name = name    # Artificial nodes won't have any "token_text", so give them a name 
         self.token = token  # From which token did we create node?
