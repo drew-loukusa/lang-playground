@@ -1,5 +1,5 @@
-from base.abstract_syntax_tree import AST
 from base.abstract_parser import AbstractParser, ParsingError
+from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
@@ -7,12 +7,13 @@ class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
         super().__init__(
             input_lexer=PlaygroundLexer(input_str),
-            k=2
+            k=2,
+            AST_Class=PG_AST
         )
         self.testing = False
 
     def program(self): 
-        root = AST(artificial=True, name="$PROGRAM")
+        root = PG_AST(artificial=True, name="$PROGRAM")
         try:
             while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER} or \
                 self.LT(1).text == 'print':

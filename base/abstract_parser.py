@@ -6,9 +6,10 @@ class ParsingError(Exception):
         super().__init__(self.message)
 
 class AbstractParser:
-    def __init__(self, input_lexer, k=1):
+    def __init__(self, input_lexer, k=1, AST_Class=None):
         self.input = input_lexer # A lexer with method nextToken() defined
         self.k = k              # How many lookahead tokens
+        self.AST_Class = AST_Class
         self.p = 0              # Circular index of next token positon to fill
         self.lookahead = []     # Circular lookahead buffer 
         for _ in range(k):      # Prime buffer
@@ -28,10 +29,16 @@ class AbstractParser:
         return self.LT(i).type 
 
     def match(self, x):
-        """ Accepts token type as a Tokens enum attribute 
-            Returns an AST node """
+        """ 
+            Accepts token type as a Tokens enum attribute 
+            
+            Returns an AST node of class 'AST_Class' if 'AST_Class' is specfied.
+
+            The base AST class provided in 'abstract_syntax_tree.py' will work, 
+            or any child class that inherits from said AST class.
+        """
         if self.LA(1) == x: # x is token_type 
-            node = AST(self.LT(1))
+            node = self.AST_Class(self.LT(1)) if self.AST_Class != None else None 
             self.consume()
             return node 
         else:
