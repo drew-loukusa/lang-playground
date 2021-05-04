@@ -15,7 +15,7 @@ class PlaygroundParser(AbstractParser):
     def program(self): 
         root = PG_AST(artificial=True, name="$PROGRAM")
         try:
-            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.NUMBER}:
+            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, PG_Type.FLOAT}:
                 root.add_child(self.statement())
             
             if self.LA(1) != PG_Type.EOF:
@@ -40,7 +40,7 @@ class PlaygroundParser(AbstractParser):
         elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
             root = self.assign()
 
-        elif self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER}:
+        elif self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT}:
             root = self.add_expr()
             self.match(PG_Type.SEMI_COLON)
 
@@ -69,7 +69,7 @@ class PlaygroundParser(AbstractParser):
         return root 
 
     def add_expr(self): 
-        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER }:
+        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
         left = self.mult_expr()
@@ -84,7 +84,7 @@ class PlaygroundParser(AbstractParser):
         return root if root != None else left
         
     def mult_expr(self):
-        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER }:
+        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         
         root = None 
@@ -108,8 +108,10 @@ class PlaygroundParser(AbstractParser):
         root = None 
         if self.LA(1) == PG_Type.NAME:
             root = self.match(PG_Type.NAME)
-        elif self.LA(1) == PG_Type.NUMBER:
-            root = self.match(PG_Type.NUMBER)
+        elif self.LA(1) == PG_Type.INT:
+            root = self.match(PG_Type.INT)
+        elif self.LA(1) == PG_Type.FLOAT:
+            root = self.match(PG_Type.FLOAT)
         elif self.LA(1) == PG_Type.LPAREN:
             self.match(PG_Type.LPAREN)
             root = self.add_expr()
@@ -161,6 +163,7 @@ if __name__ == "__main__":
                 print(5 + 5);
                 print(a + a); 
                 print(5 * (3 + 2));
+                print(5.0 + 2.3);
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     print(AST.to_string_tree())

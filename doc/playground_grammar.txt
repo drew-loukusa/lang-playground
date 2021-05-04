@@ -27,5 +27,6 @@ SEMI_COLON: ';' ;
 EQUAL: '=' ;
 LPAREN: '(' ;
 RPAREN: ')' ;  
-NUMBER: ('0' .. '9')+ ; 
+DOT: '.' ;
+NUMBER: ('0' .. '9')+ ('.' ('0' .. '9')+)? ; 
 NAME : ('a'..'z' |'A'..'Z')+ ;

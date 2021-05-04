@@ -9,7 +9,9 @@ class PG_Type(Enum):
     MINUS = auto()
     STAR = auto()
     FSLASH = auto()
-    NUMBER = auto()
+    INT = auto()
+    FLOAT = auto()
+    DOT = auto()
     NAME = auto()
     PRINT = auto()
     INVALID_TOKEN_TYPE = 0

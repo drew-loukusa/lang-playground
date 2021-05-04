@@ -32,7 +32,8 @@ class PlaygroundInterpreter:
             elif token_type == PG_Type.STAR:    return self.op(t)
             elif token_type == PG_Type.FSLASH:  return self.op(t)
             elif token_type == PG_Type.NAME:    return self.load(t)
-            elif token_type == PG_Type.NUMBER:  return int(t.token.text)
+            elif token_type == PG_Type.INT:     return int(t.token.text)
+            elif token_type == PG_Type.FLOAT:   return float(t.token.text)
             else:
                 raise UnsupportedOperationException(f"Node {t.name}: <{t.token}> not handled")
           
@@ -88,6 +89,7 @@ print(a + 3);
 foo = 3 * 5;
 print(foo + (a * (3  -  4)));
 print(3 - 4);
+print(2.4 + 1.3);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

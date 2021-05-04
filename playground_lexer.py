@@ -61,7 +61,7 @@ class PlaygroundLexer(AbstractLexer):
                     token_text=self.consume()
                 )
 
-            elif self.isNumber():
+            elif self.isDigit():
                 return self.NUMBER()
                 
             elif self.isLetter():
@@ -75,7 +75,7 @@ class PlaygroundLexer(AbstractLexer):
             token_text="<EOF>"
         )
     
-    def isNumber(self): 
+    def isDigit(self): 
         return self.c >= '0' and self.c <= '9'
     
     def isLetter(self):
@@ -97,16 +97,27 @@ class PlaygroundLexer(AbstractLexer):
         )
 
     def NUMBER(self):
+        token_type = PG_Type.INT # Assume into start
         buf = self.consume()
-        while self.isNumber():
+        while self.isDigit():
             buf += self.consume()
+
+        if self.c == '.':
+            token_type = PG_Type.FLOAT # Change if float recognized
+            buf += self.consume()
+            while self.isDigit():
+                buf += self.consume()
+            
+            if not (buf[-1] >= '0' and buf[-1] <= '9'):
+                raise Exception(f"A floating point number must have at least 1 digit after the dot: {buf}")
+
         return PG_Token(
-            token_type=PG_Type.NUMBER,
+            token_type=token_type,
             token_text=buf
         )
 
 if __name__ == "__main__":
-    input_str = "+-*/ = 1 11 a ab a AB () print"
+    input_str = "+-*/ = 1 11 a ab a AB () print 5.0"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != PG_Type.EOF:
