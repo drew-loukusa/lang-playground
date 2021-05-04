@@ -27,6 +27,8 @@ class PlaygroundParser(AbstractParser):
             # If tests are being run, re-raise exception
             if self.testing:
                 raise pe 
+            
+            return None
 
     def statement(self):
 
