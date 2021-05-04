@@ -4,6 +4,10 @@ from base.abstract_lexer import AbstractLexer
 class PlaygroundLexer(AbstractLexer):
     def __init__(self, input_str):
         super().__init__(input_str)
+
+        self.reserved_words = {
+            'print': PG_Type.PRINT,
+        }
     
     def next_token(self) -> PG_Token:
         """ Returns the next char in the input string as a Token. 
@@ -82,8 +86,13 @@ class PlaygroundLexer(AbstractLexer):
         buf = self.consume()
         while self.isLetter():
             buf += self.consume()
+        
+        token_type = PG_Type.NAME
+        if buf in self.reserved_words:
+            token_type = self.reserved_words[buf]
+        
         return PG_Token(
-            token_type=PG_Type.NAME,
+            token_type=token_type,
             token_text=buf
         )
 
@@ -97,7 +106,7 @@ class PlaygroundLexer(AbstractLexer):
         )
 
 if __name__ == "__main__":
-    input_str = "+-*/ = 1 11 a ab a AB ()"
+    input_str = "+-*/ = 1 11 a ab a AB () print"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != PG_Type.EOF:

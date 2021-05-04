@@ -11,6 +11,7 @@ class PG_Type(Enum):
     FSLASH = auto()
     NUMBER = auto()
     NAME = auto()
+    PRINT = auto()
     INVALID_TOKEN_TYPE = 0
     EOF = -1 
 

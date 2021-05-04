@@ -15,8 +15,7 @@ class PlaygroundParser(AbstractParser):
     def program(self): 
         root = PG_AST(artificial=True, name="$PROGRAM")
         try:
-            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.NUMBER} or \
-                self.LT(1).text == 'print':
+            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.NUMBER}:
                 root.add_child(self.statement())
             
             if self.LA(1) != PG_Type.EOF:
@@ -33,7 +32,7 @@ class PlaygroundParser(AbstractParser):
 
         root = None 
         # Parse built in print function 
-        if self.LA(1) == PG_Type.NAME and self.LT(1).text == 'print':
+        if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
 
         elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
@@ -49,7 +48,7 @@ class PlaygroundParser(AbstractParser):
         return root 
 
     def pg_print(self):
-        root = self.match(PG_Type.NAME)
+        root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
         expr = self.add_expr()
         self.match(PG_Type.RPAREN)
@@ -162,4 +161,4 @@ if __name__ == "__main__":
                 print(5 * (3 + 2));
                 """
     AST = PlaygroundParser(input_str=input_str).program()
-    AST.to_string_tree()
+    print(AST.to_string_tree())
