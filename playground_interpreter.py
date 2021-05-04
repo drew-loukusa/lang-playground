@@ -78,6 +78,16 @@ if __name__ == "__main__":
 a = 5;
 b = 5;
 print(a + b);
+
+print(5 - 2);
+print(5 * 2);
+print(5 / 2);
+
+a = 5 / 2;
+print(a + 3);
+foo = 3 * 5;
+print(foo + (a * (3  -  4)));
+print(3 - 4);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
