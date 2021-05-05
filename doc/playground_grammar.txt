@@ -5,13 +5,21 @@
 # Can assign value of math expressions to variables
 # Can print the result of an expression or variable
 
-program: statement * ;
+program: statements ;
 
-statement: print_stat | assign_stat | expr_stat ; 
+statemnts: statment * ; 
+
+statement:  print_stat  | 
+            assign_stat | 
+            expr_stat   |
+            block_stat
+            ; 
+
 print_stat: 'print' LPAREN expr RPAREN SEMI_COLON ;
 assign_stat: NAME ASSIGN expr SEMI_COLON ; 
 expr_stat: add_expr SEMI_COLON ;
-
+block_stat: '{' statements '}' ;
+ 
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
 atom: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
