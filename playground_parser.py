@@ -34,16 +34,13 @@ class PlaygroundParser(AbstractParser):
         return root 
 
     def statement(self):
-
         root = None 
         # Parse built in print function 
         if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
         
         elif self.LA(1) == PG_Type.LCURBRACK:
-            self.match(PG_Type.LCURBRACK)
-            root = self.statements()
-            self.match(PG_Type.RCURBRACK)
+            root = self.block_stat()
             
         elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
             root = self.assign()
@@ -55,6 +52,12 @@ class PlaygroundParser(AbstractParser):
         else: 
             raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
         
+        return root 
+    
+    def block_stat(self):
+        self.match(PG_Type.LCURBRACK)
+        root = self.statements()
+        self.match(PG_Type.RCURBRACK)
         return root 
 
     def pg_print(self):
