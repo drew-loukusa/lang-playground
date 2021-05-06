@@ -22,7 +22,7 @@ block_stat: '{' statements '}' ;
  
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
-atom: NAME | NUMBER | (LPAREN add_expr RPAREN) ;
+atom: NAME | INT | FLOAT | (LPAREN add_expr RPAREN) ;
 
 add_op: PLUS | MINUS ;
 mult_op: STAR | FSLASH ;
@@ -36,5 +36,6 @@ EQUAL: '=' ;
 LPAREN: '(' ;
 RPAREN: ')' ;  
 DOT: '.' ;
-NUMBER: ('0' .. '9')+ ('.' ('0' .. '9')+)? ; 
+INT: ('0' .. '9')+ ; 
+FLOAT: ('0' .. '9')+ ('.' ('0' .. '9')+)? ; 
 NAME : ('a'..'z' |'A'..'Z')+ ;

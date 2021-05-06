@@ -16,11 +16,14 @@ statement: ^ ( print_stat
 print_stat: 'print' LPAREN expr RPAREN SEMI_COLON   -> ^( 'print' expr ) ;
 assign_stat: NAME ASSIGN expr SEMI_COLON            -> ^( '=' NAME expr ) ; 
 expr_stat: add_expr SEMI_COLON                      -> ^( add_expr ) ;
-block_stat: '{' statements '}'                     -> ^( statements ) ; 
+block_stat: '{' statements '}'                      -> ^( statements ) ; 
 
 add_expr: mult_expr ( ^ add_op mult_expr)* ; 
 mult_expr: atom ( ^ mult_op atom)* ;
-atom: NAME | NUMBER | (LPAREN add_expr RPAREN) -> ^( NAME | NUMBER | add_expr ) ;
+atom:   NAME    | 
+        INT     | 
+        FLOAT   | 
+        (LPAREN add_expr RPAREN) -> ^( NAME | INT | FLOAT | add_expr ) ;
 
 add_op: ^ ( PLUS | MINUS );
 mult_op: ^ ( STAR | FSLASH );
