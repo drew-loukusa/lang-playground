@@ -3,16 +3,20 @@
 # Some rules use a re-write notation created for ANTLR
 # The re-write allows you to discard unneeded lexical tokens
 
-program: ^ $PROGRAM statement * ;
+program: ^ statements ;
+
+statements: ^ $STATEMENTS statement * ;
 
 statement: ^ ( print_stat 
             | assign_stat 
-            | expr_stat ) 
+            | expr_stat  
+            | block_stat )
             ; 
 
 print_stat: 'print' LPAREN expr RPAREN SEMI_COLON   -> ^( 'print' expr ) ;
 assign_stat: NAME ASSIGN expr SEMI_COLON            -> ^( '=' NAME expr ) ; 
 expr_stat: add_expr SEMI_COLON                      -> ^( add_expr ) ;
+block_stat: '{' statements '}'                     -> ^( statements ) ; 
 
 add_expr: mult_expr ( ^ add_op mult_expr)* ; 
 mult_expr: atom ( ^ mult_op atom)* ;

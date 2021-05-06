@@ -47,6 +47,18 @@ class PlaygroundLexer(AbstractLexer):
                     token_text=self.consume()
                 )
 
+            elif self.c == '{':
+                return PG_Token(
+                    token_type=PG_Type.LCURBRACK,
+                    token_text=self.consume()
+                )
+
+            elif self.c == '}':
+                return PG_Token(
+                    token_type=PG_Type.RCURBRACK,
+                    token_text=self.consume()
+                )
+
             elif self.c in ['+', '-']:
                 token_type = PG_Type.PLUS if self.c == '+' else PG_Type.MINUS
                 return PG_Token(
@@ -117,7 +129,7 @@ class PlaygroundLexer(AbstractLexer):
         )
 
 if __name__ == "__main__":
-    input_str = "+-*/ = 1 11 a ab a AB () print 5.0"
+    input_str = "+-*/ = 1 11 a ab a AB () print 5.0 {}"
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != PG_Type.EOF:

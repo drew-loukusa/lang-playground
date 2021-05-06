@@ -13,11 +13,8 @@ class PlaygroundParser(AbstractParser):
         self.testing = False
 
     def program(self): 
-        root = PG_AST(artificial=True, name="$PROGRAM")
         try:
-            while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, PG_Type.FLOAT}:
-                root.add_child(self.statement())
-            
+            root = self.statements()
             if self.LA(1) != PG_Type.EOF:
                 raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
             return root 
@@ -30,13 +27,21 @@ class PlaygroundParser(AbstractParser):
             
             return None
 
-    def statement(self):
+    def statements(self):
+        root = PG_AST(artificial=True, name="$STATEMENTS")
+        while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, PG_Type.FLOAT, PG_Type.LCURBRACK}:
+            root.add_child(self.statement())
+        return root 
 
+    def statement(self):
         root = None 
         # Parse built in print function 
         if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
-
+        
+        elif self.LA(1) == PG_Type.LCURBRACK:
+            root = self.block_stat()
+            
         elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
             root = self.assign()
 
@@ -47,6 +52,12 @@ class PlaygroundParser(AbstractParser):
         else: 
             raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
         
+        return root 
+    
+    def block_stat(self):
+        self.match(PG_Type.LCURBRACK)
+        root = self.statements()
+        self.match(PG_Type.RCURBRACK)
         return root 
 
     def pg_print(self):
@@ -164,6 +175,12 @@ if __name__ == "__main__":
                 print(a + a); 
                 print(5 * (3 + 2));
                 print(5.0 + 2.3);
+                { a + b; }
+                {
+                    {
+                        print(a + b);
+                    }
+                }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     print(AST.to_string_tree())

@@ -5,6 +5,8 @@ class PG_Type(Enum):
     EQUAL = auto()
     LPAREN = auto()
     RPAREN = auto()
+    LCURBRACK = auto()
+    RCURBRACK = auto()
     PLUS = auto()
     MINUS = auto()
     STAR = auto()
