@@ -22,6 +22,13 @@ class AbstractLexer:
             self.c = self.input[self.p]
         return c
 
+    def rewind(self, n: int):
+        """ Rewinds the character stream by 'n' characters. 
+            Sets self.p = self.p - n
+            Then, sets self.c = self.p  """
+        self.p = self.p - n 
+        self.c = self.input[self.p]
+
     def _WS(self):
         """ Consumes whitespace until a non-whitespace char is encountered. """
         while self.c in [' ','\t','\n','\r']: 

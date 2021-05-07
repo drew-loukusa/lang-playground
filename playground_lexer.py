@@ -5,8 +5,12 @@ class PlaygroundLexer(AbstractLexer):
     def __init__(self, input_str):
         super().__init__(input_str)
 
-        self.reserved_words = {
+        self.reserved_names = {
             'print': PG_Type.PRINT,
+            'True': PG_Type.TRUE,
+            'False': PG_Type.FALSE,
+            'and': PG_Type.AND, 
+            'or': PG_Type.OR,
         }
     
     def next_token(self) -> PG_Token:
@@ -30,9 +34,42 @@ class PlaygroundLexer(AbstractLexer):
                 )
                 
             elif self.c == '=':
+                token_type = PG_Type.ASSIGN
+                buf = self.consume()
+
+                if self.c == '=':
+                    buf += self.consume()
+                    token_type = PG_Type.EQ
+
                 return PG_Token(
-                    token_type=PG_Type.EQUAL, 
-                    token_text=self.consume()
+                    token_type=token_type, 
+                    token_text=buf
+                )
+            
+            elif self.c == '>':
+                token_type = PG_Type.GT
+                buf = self.consume()
+
+                if self.c == '=':
+                    buf += self.consume()
+                    token_type = PG_Type.GE
+
+                return PG_Token(
+                    token_type=token_type, 
+                    token_text=buf
+                )
+
+            elif self.c == '<':
+                token_type = PG_Type.LT
+                buf = self.consume()
+
+                if self.c == '=':
+                    buf += self.consume()
+                    token_type = PG_Type.LE
+              
+                return PG_Token(
+                    token_type=token_type, 
+                    token_text=buf
                 )
             
             elif self.c == '(':
@@ -100,8 +137,8 @@ class PlaygroundLexer(AbstractLexer):
             buf += self.consume()
         
         token_type = PG_Type.NAME
-        if buf in self.reserved_words:
-            token_type = self.reserved_words[buf]
+        if buf in self.reserved_names:
+            token_type = self.reserved_names[buf]
         
         return PG_Token(
             token_type=token_type,
@@ -129,7 +166,7 @@ class PlaygroundLexer(AbstractLexer):
         )
 
 if __name__ == "__main__":
-    input_str = "+-*/ = 1 11 a ab a AB () print 5.0 {}"
+    input_str = "+-*/ = 1 11 a ab a AB () print 5.0 {} True False and or > < == <= >="
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != PG_Type.EOF:

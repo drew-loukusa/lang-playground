@@ -60,7 +60,7 @@ class PlaygroundInterpreter:
                 self.statements(t)
 
             elif token_type == PG_Type.PRINT:   self.pg_print(t)
-            elif token_type == PG_Type.EQUAL:   self.assign(t)
+            elif token_type == PG_Type.ASSIGN:   self.assign(t)
             elif token_type == PG_Type.PLUS:    return self.op(t)
             elif token_type == PG_Type.MINUS:   return self.op(t)
             elif token_type == PG_Type.STAR:    return self.op(t)

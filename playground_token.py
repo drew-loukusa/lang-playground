@@ -2,7 +2,7 @@ from enum import Enum, auto
 from base.abstract_token import AbstractToken 
 class PG_Type(Enum):
     SEMI_COLON = auto()
-    EQUAL = auto()
+    ASSIGN = auto()
     LPAREN = auto()
     RPAREN = auto()
     LCURBRACK = auto()
@@ -16,6 +16,15 @@ class PG_Type(Enum):
     DOT = auto()
     NAME = auto()
     PRINT = auto()
+    TRUE = auto()
+    FALSE = auto()
+    AND = auto()
+    OR = auto()
+    EQ = auto()
+    GE = auto()
+    LE = auto()
+    GT = auto()
+    LT = auto()
     INVALID_TOKEN_TYPE = 0
     EOF = -1 
 

@@ -29,7 +29,10 @@ class PlaygroundParser(AbstractParser):
 
     def statements(self):
         root = PG_AST(artificial=True, name="$STATEMENTS")
-        while self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, PG_Type.FLOAT, PG_Type.LCURBRACK}:
+        while self.LA(1) in {
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.LCURBRACK, PG_Type.TRUE, PG_Type.FALSE
+            }:
             root.add_child(self.statement())
         return root 
 
@@ -39,14 +42,19 @@ class PlaygroundParser(AbstractParser):
         if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
         
+        # Block statement
         elif self.LA(1) == PG_Type.LCURBRACK:
             root = self.block_stat()
-            
-        elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.EQUAL:
+        
+        # Assignment 
+        elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.ASSIGN:
             root = self.assign()
 
-        elif self.LA(1) in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT}:
-            root = self.add_expr()
+        # Bool Expression 
+        elif self.LA(1) in {
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT,
+            }:
+            root = self.bool_expr()
             self.match(PG_Type.SEMI_COLON)
 
         else: 
@@ -72,15 +80,90 @@ class PlaygroundParser(AbstractParser):
     
     def assign(self):
         name = self.match(PG_Type.NAME)
-        root = self.match(PG_Type.EQUAL)
-        expr = self.add_expr()
+        root = self.match(PG_Type.ASSIGN)
+        expr = self.bool_expr()
         self.match(PG_Type.SEMI_COLON)
 
         root.add_children(name, expr)
         return root 
 
+    def bool_expr(self):
+        if self.LA(1) not in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+            }:
+            raise ParsingError(f"Expecting an bool expression; found {self.LT(1)} on line {self.input.line_number}")
+        root = None 
+        left = self.and_expr()
+
+        while self.LA(1) == PG_Type.OR:
+            if root != None:
+                left = root 
+            root = self.match(PG_Type.OR)
+            right = self.and_expr()
+            root.add_children(left, right)
+        
+        return root if root != None else left
+
+    def and_expr(self):
+        if self.LA(1) not in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+            }:
+            raise ParsingError(f"Expecting an and expression; found {self.LT(1)} on line {self.input.line_number}")
+        root = None 
+        left = self.comp_expr()
+
+        while self.LA(1) == PG_Type.AND:
+            if root != None:
+                left = root 
+            root = self.match(PG_Type.AND)
+            right = self.comp_expr()
+            root.add_children(left, right)
+        
+        return root if root != None else left
+
+    def comp_expr(self):
+        if self.LA(1) not in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+            }:
+            raise ParsingError(f"Expecting a comp expression; found {self.LT(1)} on line {self.input.line_number}")
+        root = None 
+        left = self.add_expr()
+
+        while self.LA(1) in { 
+                PG_Type.LT, PG_Type.LE, PG_Type.GT, PG_Type.GE, PG_Type.EQ 
+            }:
+            if root != None:
+                left = root 
+            root = self.cmp_op()
+            right = self.add_expr()
+            root.add_children(left, right)
+        
+        return root if root != None else left
+
+    def cmp_op(self):
+        root = None 
+        if self.LA(1) == PG_Type.LT:
+            root = self.match(PG_Type.LT)
+        elif self.LA(1) == PG_Type.LE:
+            root = self.match(PG_Type.LE)
+        elif self.LA(1) == PG_Type.GT:
+            root = self.match(PG_Type.GT)
+        elif self.LA(1) == PG_Type.GE:
+            root = self.match(PG_Type.GE)
+        elif self.LA(1) == PG_Type.EQ:
+            root = self.match(PG_Type.EQ)
+        else: 
+            raise ParsingError(f"Expecting a comparison operator; found {self.LT(1)} on line {self.input.line_number}")
+        return root 
+
     def add_expr(self): 
-        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT }:
+        if self.LA(1) not in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+            }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
         left = self.mult_expr()
@@ -95,7 +178,10 @@ class PlaygroundParser(AbstractParser):
         return root if root != None else left
         
     def mult_expr(self):
-        if self.LA(1) not in { PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT }:
+        if self.LA(1) not in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+            }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         
         root = None 
@@ -123,9 +209,13 @@ class PlaygroundParser(AbstractParser):
             root = self.match(PG_Type.INT)
         elif self.LA(1) == PG_Type.FLOAT:
             root = self.match(PG_Type.FLOAT)
+        elif self.LA(1) == PG_Type.TRUE:
+            root = self.match(PG_Type.TRUE)
+        elif self.LA(1) == PG_Type.FALSE:
+            root = self.match(PG_Type.FALSE)
         elif self.LA(1) == PG_Type.LPAREN:
             self.match(PG_Type.LPAREN)
-            root = self.add_expr()
+            root = self.bool_expr()
             self.match(PG_Type.RPAREN)
         else: 
             raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
@@ -154,6 +244,7 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
+                ((5 + 3) > 2 and True) or (10 <= (2 * 20) and 3 < 2);
                 5 + 5;
                 10 + 10;
                 5 - 5;
@@ -175,12 +266,14 @@ if __name__ == "__main__":
                 print(a + a); 
                 print(5 * (3 + 2));
                 print(5.0 + 2.3);
-                { a + b; }
+                { a + b; }                
                 {
                     {
                         print(a + b);
                     }
                 }
+                (5 - 3) >= 2 + 5;
+                5 > 6;
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     print(AST.to_string_tree())
