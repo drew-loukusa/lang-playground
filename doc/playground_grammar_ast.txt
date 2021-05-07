@@ -10,13 +10,20 @@ statements: ^ $STATEMENTS statement * ;
 statement: ^ ( print_stat 
             | assign_stat 
             | expr_stat  
-            | block_stat )
+            | block_stat 
+            | if_stat
+            | while_stat )
             ; 
 
-print_stat: 'print' LPAREN bool_expr RPAREN SEMI_COLON   -> ^( 'print' bool_expr ) ;
-assign_stat: NAME ASSIGN bool_expr SEMI_COLON            -> ^( '=' NAME bool_expr ) ; 
-expr_stat: bool_expr SEMI_COLON                      -> ^( bool_expr ) ;
-block_stat: '{' statements '}'                      -> ^( statements ) ; 
+print_stat: 'print' '(' bool_expr ')' ';'   -> ^( 'print' bool_expr ) ;
+assign_stat: NAME '=' bool_expr ';'         -> ^( '=' NAME bool_expr ) ; 
+expr_stat:   bool_expr ';'                  -> ^( bool_expr ) ;
+block_stat:  '{' statements '}'             -> ^( statements ) ; 
+
+if_stat:    ^ 'if'   bool_expr block_stat elif_stat ? else_stat ? ;
+elif_stat:  ^ 'elif' bool_expr block_stat elif_stat * else_stat ? ;
+else_stat:    'else' block_stat -> ^( block_stat );
+while_stat: ^ 'while' bool_expr block_stat ;
 
 bool_expr: and_expr ( ^ 'or' and_expr ) * ;
 and_expr: comp_expr ( ^ 'and' comp_expr ) * ; 
@@ -29,7 +36,7 @@ atom:   NAME    |
         FLOAT   | 
         'True'  |
         'False' |
-        (LPAREN add_expr RPAREN) -> ^( NAME | INT | FLOAT | 'True' | 'False | add_expr ) ;
+        ('(' add_expr ')') -> ^( NAME | INT | FLOAT | 'True' | 'False | add_expr ) ;
 
 cmp_op: ^ ( '==' |  '>=' |  '<=' |  '>' |  '<' )      ;
 add_op: ^ ( PLUS | MINUS );

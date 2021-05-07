@@ -11,6 +11,10 @@ class PlaygroundLexer(AbstractLexer):
             'False': PG_Type.FALSE,
             'and': PG_Type.AND, 
             'or': PG_Type.OR,
+            'if': PG_Type.IF,
+            'elif': PG_Type.ELIF,
+            'else': PG_Type.ELSE,
+            'while': PG_Type.WHILE,
         }
     
     def next_token(self) -> PG_Token:
@@ -166,7 +170,16 @@ class PlaygroundLexer(AbstractLexer):
         )
 
 if __name__ == "__main__":
-    input_str = "+-*/ = 1 11 a ab a AB () print 5.0 {} True False and or > < == <= >="
+    input_str = """
+    +-*/ =
+    1 11 5.0 
+    a ab a AB 
+    print 
+    () {} 
+    True False and or 
+    > < == <= >= 
+    if elif else while 
+    """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
     while token.type != PG_Type.EOF:

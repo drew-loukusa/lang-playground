@@ -25,6 +25,10 @@ class PG_Type(Enum):
     LE = auto()
     GT = auto()
     LT = auto()
+    IF = auto()
+    ELIF = auto()
+    ELSE = auto()
+    WHILE = auto()
     INVALID_TOKEN_TYPE = 0
     EOF = -1 
 

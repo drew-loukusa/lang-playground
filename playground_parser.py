@@ -31,7 +31,8 @@ class PlaygroundParser(AbstractParser):
         root = PG_AST(artificial=True, name="$STATEMENTS")
         while self.LA(1) in {
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.LCURBRACK, PG_Type.TRUE, PG_Type.FALSE
+                PG_Type.FLOAT, PG_Type.LCURBRACK, PG_Type.TRUE, PG_Type.FALSE,
+                PG_Type.IF, PG_Type.WHILE,
             }:
             root.add_child(self.statement())
         return root 
@@ -56,18 +57,18 @@ class PlaygroundParser(AbstractParser):
             }:
             root = self.bool_expr()
             self.match(PG_Type.SEMI_COLON)
+        
+        elif self.LA(1) == PG_Type.IF:
+            root = self.if_stat()
+
+        elif self.LA(1) == PG_Type.WHILE:
+            root = self.while_stat()
 
         else: 
             raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
         
         return root 
     
-    def block_stat(self):
-        self.match(PG_Type.LCURBRACK)
-        root = self.statements()
-        self.match(PG_Type.RCURBRACK)
-        return root 
-
     def pg_print(self):
         root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
@@ -87,6 +88,51 @@ class PlaygroundParser(AbstractParser):
         root.add_children(name, expr)
         return root 
 
+    def block_stat(self):
+        self.match(PG_Type.LCURBRACK)
+        root = self.statements()
+        self.match(PG_Type.RCURBRACK)
+        return root 
+
+    def if_stat(self):
+        root = self.match(PG_Type.IF)
+        test = self.bool_expr()
+        block = self.block_stat()
+        root.add_children(test, block)
+
+        if self.LA(1) == PG_Type.ELIF:
+            root.add_child(self.elif_stat())
+
+        if self.LA(1) == PG_Type.ELSE:
+            root.add_child(self.else_stat())
+        
+        return root 
+    
+    def elif_stat(self):
+        root = self.match(PG_Type.ELIF)
+        test = self.bool_expr()
+        block = self.block_stat()
+        root.add_children(test, block)
+
+        while self.LA(1) == PG_Type.ELIF:
+            root.add_child(self.elif_stat())
+
+        if self.LA(1) == PG_Type.ELSE:
+            root.add_child(self.else_stat())
+        
+        return root 
+
+    def else_stat(self):
+        self.match(PG_Type.ELSE)
+        return self.block_stat()
+
+    def while_stat(self):
+        root = self.match(PG_Type.WHILE)
+        test = self.bool_expr()
+        block = self.block_stat()
+        root.add_children(test, block)
+        return root 
+    
     def bool_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -244,7 +290,6 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
-                ((5 + 3) > 2 and True) or (10 <= (2 * 20) and 3 < 2);
                 5 + 5;
                 10 + 10;
                 5 - 5;
@@ -274,6 +319,10 @@ if __name__ == "__main__":
                 }
                 (5 - 3) >= 2 + 5;
                 5 > 6;
+                ((5 + 3) > 2 and True) or (10 <= (2 * 20) and 3 < 2);
+                if (5 > 6) { a + b; }
+                if (5 > 6) { print(a+b); } elif (5 <= 6 ) { print(b); } else { print(a); }
+                while (a > 0) { print(a); a = a - 1; }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     print(AST.to_string_tree())
