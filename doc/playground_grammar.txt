@@ -22,7 +22,7 @@ block_stat: '{' statements '}' ;
 
 bool_expr: and_expr (  'or' and_expr ) * ;
 and_expr: comp_expr ( 'and' comp_expr ) * ; 
-comp_expr: add_expr ( cmp_op add_expr ) ? ; 
+comp_expr: add_expr ( cmp_op add_expr ) * ; 
  
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
