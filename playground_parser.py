@@ -323,6 +323,8 @@ if __name__ == "__main__":
                 if (5 > 6) { a + b; }
                 if (5 > 6) { print(a+b); } elif (5 <= 6 ) { print(b); } else { print(a); }
                 while (a > 0) { print(a); a = a - 1; }
+                if True { a; } elif False { b; } elif True { a; } else { b; }
+                if True { a; } else { b; }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     print(AST.to_string_tree())

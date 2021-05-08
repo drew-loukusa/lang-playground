@@ -15,7 +15,7 @@ class Scope:
         self.parent: Scope = None 
         self.children: list[Scope, ...] = []
 
-    def _resolve(self, symbol: str):
+    def resolve(self, symbol: str):
         """ 
            Attempts to locate and return whatever value was assigned to 
            'symbol' if 'symobol' exists in the current scope, or any 
@@ -23,10 +23,24 @@ class Scope:
         """
         cur_scope = self 
         while cur_scope != None:
-            if symbol in self.symbols:
-                return self.symbols[symbol]
+            if symbol in cur_scope.symbols:
+                return cur_scope.symbols[symbol]
             cur_scope = cur_scope.parent 
         raise Exception(f"Symbol {symbol} could not be found!")
+
+    def resolve_scope(self, symbol: str):
+        """ 
+           Attempts to locate and return the scope object of symbol
+           'symbol' if 'symobol' exists in the current scope, or any 
+           parent scope.
+        """
+        cur_scope = self 
+        while cur_scope != None:
+            if symbol in cur_scope.symbols:
+                return cur_scope
+            cur_scope = cur_scope.parent 
+        return None 
+
 
 class PlaygroundInterpreter:
 
@@ -85,8 +99,21 @@ class PlaygroundInterpreter:
             if t.artificial == True and t.name == "$STATEMENTS": 
                 self._statements(t)
 
-            elif token_type == PG_Type.PRINT:   self._print(t)
-            elif token_type == PG_Type.ASSIGN:  self._assign(t)
+            elif token_type == PG_Type.PRINT:   
+                self._print(t)
+
+            elif token_type == PG_Type.ASSIGN:  
+                self._assign(t)
+
+            elif token_type in {
+                    PG_Type.IF,
+                    PG_Type.ELIF,
+                }: 
+                self._conditional(t)
+
+            elif token_type == PG_Type.WHILE:
+                self._while(t)
+
             elif token_type in { 
                     PG_Type.PLUS, 
                     PG_Type.MINUS, 
@@ -94,6 +121,7 @@ class PlaygroundInterpreter:
                     PG_Type.FSLASH
                 }:
                 return self._op(t)
+
             elif token_type in { 
                     PG_Type.EQ, 
                     PG_Type.LT, 
@@ -102,9 +130,11 @@ class PlaygroundInterpreter:
                     PG_Type.GE,
                 }:
                 return self._cmp(t)
+
             elif token_type == PG_Type.NAME:    return self._load(t)
             elif token_type == PG_Type.INT:     return int(t.token.text)
             elif token_type == PG_Type.FLOAT:   return float(t.token.text)
+
             else:
                 raise UnsupportedOperationException(f"Node {t.name}: <{t.token}> not handled")
 
@@ -153,7 +183,16 @@ class PlaygroundInterpreter:
         lhs = t.children[0]
         expr = t.children[1]
         value = self._exec(expr)
-        self.current_space.symbols[lhs.token.text] = value
+
+        # Get the scope where the symbol was originally defined 
+        symbol_scope = self.current_space.resolve_scope(lhs.token.text)
+
+        # If none, symbol has not yet been defined
+        if symbol_scope is None: 
+            symbol_scope = self.current_space
+
+        # Assign symbol it's new value 
+        symbol_scope.symbols[lhs.token.text] = value
 
     def _load(self, t: PG_AST):
         """ 
@@ -161,6 +200,30 @@ class PlaygroundInterpreter:
             if it exists in the current scope, or any parent scopes.   
         """
         return self.current_space.resolve(t.token.text)
+
+    def _conditional(self, t: PG_AST):
+        """ 
+            Executes a conditional statement: 'if' 'elif' 'else'
+            Returns None   
+        """
+        test = t.children[0]
+        block = t.children[1]
+        if self._exec(test):
+            self._exec(block)
+
+        # elif or else clause present
+        elif len(t.children) == 3:
+           self._exec(t.children[2])
+
+    def _while(self, t: PG_AST):
+        """ 
+            Executes a while statement.
+            Returns None   
+        """
+        test = t.children[0]
+        block = t.children[1]
+        while self._exec(test):
+            self._exec(block)
 
     def _op(self, t: PG_AST):
         """ 
@@ -222,6 +285,19 @@ c = 2;
     print(c);
 }
 print(c);
+
+if (5 < 6){
+    print(555555);
+}
+elif (6 > 3){
+    print(6666666);
+}
+a = 10;
+while (a > 0) {
+    print(a);
+    a = a - 1;
+}
+
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
