@@ -1,3 +1,6 @@
+import sys
+sys.path.append('c:\\src\\lang-playground\\playground')
+
 import pytest
 from playground_parser import PlaygroundParser, ParsingError
 

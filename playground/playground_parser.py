@@ -1,4 +1,5 @@
-from base.abstract_parser import AbstractParser, ParsingError
+import __init__
+from abstract.abs_parser import AbstractParser, ParsingError
 from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer

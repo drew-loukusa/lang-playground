@@ -1,4 +1,4 @@
-from base.abstract_syntax_tree import AST
+from abstract.abs_ast import AST
 
 class PG_AST(AST):
     def __init__(self, token=None, artificial=False, name=None):

@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from base.abstract_token import AbstractToken 
+from abstract.abs_token import AbstractToken 
 class PG_Type(Enum):
     SEMI_COLON = auto()
     ASSIGN = auto()

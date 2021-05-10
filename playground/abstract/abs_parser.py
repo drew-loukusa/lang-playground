@@ -1,5 +1,3 @@
-from base.abstract_syntax_tree import AST
-
 class ParsingError(Exception):
     def __init__(self, message=""):
         self.message = message

@@ -1,5 +1,5 @@
 from playground_token import PG_Type, PG_Token
-from base.abstract_lexer import AbstractLexer
+from abstract.abs_lexer import AbstractLexer
 
 class PlaygroundLexer(AbstractLexer):
     def __init__(self, input_str):
