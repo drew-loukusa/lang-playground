@@ -9,13 +9,14 @@ It is a dynamically typed language which copies its syntax heavily from Python (
 In it's current form, it is made up of a hand built parser, which generates an AST, which I then feed to a hand-written high level interpreter.
 
 Current programing constructs that it supports:
-* Data types: Int, Float
+* Data types: Int, Float, Bools
 * Addition, subtraction, multiplication, division on said basic data types 
 * Boolean expressions
 * Conditional statements (if, elif, else, while)
 * Nested scopes (block statements)
 
 Next on the list to be added:
+* Data type: Strings
 * functions
 * Forward references
 * User defined data types (classes or structs, or both)
