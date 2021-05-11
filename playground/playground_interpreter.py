@@ -122,6 +122,11 @@ class PlaygroundInterpreter:
                 }:
                 return self._op(t)
 
+            elif token_type == PG_Type.AND: 
+                return self._and(t)
+            elif token_type == PG_Type.OR: 
+                return self._or(t)
+
             elif token_type in { 
                     PG_Type.EQ, 
                     PG_Type.LT, 
@@ -131,10 +136,12 @@ class PlaygroundInterpreter:
                 }:
                 return self._cmp(t)
 
+            elif token_type in { PG_Type.TRUE, PG_Type.FALSE }:    
+                return True if t.token.text == "True" else False
+
             elif token_type == PG_Type.NAME:    return self._load(t)
             elif token_type == PG_Type.INT:     return int(t.token.text)
             elif token_type == PG_Type.FLOAT:   return float(t.token.text)
-
             else:
                 raise UnsupportedOperationException(f"Node {t.name}: <{t.token}> not handled")
 
@@ -242,6 +249,45 @@ class PlaygroundInterpreter:
         elif token_type == PG_Type.STAR:    return a * b
         elif token_type == PG_Type.FSLASH:  return a / b
 
+    def _and(self, t: PG_AST):
+        """
+            Performs an AND operation.
+            The operands of the operation are the 
+            left and right sub-trees of PG_AST node 't'.
+
+            Returns Python BOOL 
+        """
+        token_type = t.token.type
+        a = self._exec( t.children[0] )
+
+        # Short circuit the AND
+        if a == False:
+            return False 
+
+        else:
+            b = self._exec( t.children[1] )
+            return b == True 
+
+    def _or(self, t: PG_AST):
+        """
+            Performs an OR operation.
+            The operands of the operation are the 
+            left and right sub-trees of PG_AST node 't'.
+
+            Returns Python BOOL 
+        """ 
+        token_type = t.token.type
+        a = self._exec( t.children[0] )
+
+        # Short Circuit 'or' statement 
+        if a == True:
+            return True  
+
+        else:
+            b = self._exec( t.children[1] )
+            return b == True 
+        
+
     def _cmp(self, t: PG_AST):
         """ 
             Performs a comparison operation.
@@ -262,6 +308,8 @@ class PlaygroundInterpreter:
 
 if __name__ == "__main__":
     code = """
+print((True and True))
+;
 a = 5;
 b = 5;
 print(a + b);
