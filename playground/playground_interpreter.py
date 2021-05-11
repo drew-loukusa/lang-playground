@@ -142,6 +142,7 @@ class PlaygroundInterpreter:
             elif token_type == PG_Type.NAME:    return self._load(t)
             elif token_type == PG_Type.INT:     return int(t.token.text)
             elif token_type == PG_Type.FLOAT:   return float(t.token.text)
+            elif token_type == PG_Type.STRING:  return str(t.token.text)
             else:
                 raise UnsupportedOperationException(f"Node {t.name}: <{t.token}> not handled")
 
@@ -340,16 +341,20 @@ c = 2;
 print(c);
 
 if (5 < 6){
-    print(555555);
+    print("5 is less than 6");
 }
 elif (6 > 3){
-    print(6666666);
+    print("6 is greater than 3");
 }
+print("Printing 10 through 1 in decreasing order");
 a = 10;
 while (a > 0) {
     print(a);
     a = a - 1;
 }
+print("A test string");
+a = "String stored in a";
+print(a);
 
 """
     PI = PlaygroundInterpreter()
