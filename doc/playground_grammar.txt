@@ -26,7 +26,7 @@ comp_expr: add_expr ( cmp_op add_expr ) * ;
  
 add_expr: mult_expr (add_op mult_expr)* ; 
 mult_expr: atom (mult_op atom)* ;
-atom: NAME | INT | FLOAT | 'True' | 'False' | (LPAREN add_expr RPAREN) ;
+atom: NAME | INT | FLOAT | STRING | 'True' | 'False' | (LPAREN add_expr RPAREN) ;
 
 add_op: PLUS | MINUS ;
 mult_op: STAR | FSLASH ;

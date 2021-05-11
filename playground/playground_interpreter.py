@@ -308,6 +308,7 @@ class PlaygroundInterpreter:
 
 if __name__ == "__main__":
     code = """
+print(10 < True);
 if(True and True){print(True);}
 if(True or True){print(True);}
 if(False or True){print(True);}

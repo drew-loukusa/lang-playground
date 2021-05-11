@@ -114,6 +114,9 @@ class PlaygroundLexer(AbstractLexer):
                     token_text=self.consume()
                 )
 
+            elif self.c == '"':
+                return self.STRING()
+
             elif self.isDigit():
                 return self.NUMBER()
                 
@@ -134,6 +137,22 @@ class PlaygroundLexer(AbstractLexer):
     def isLetter(self):
         c = self.c.lower()
         return c >= 'a' and c <= 'z'
+
+    def STRING(self):
+        # Discard the opening quote 
+        self.consume()
+        buf = ""
+        while not (self.c == '"'):
+            buf += self.consume()
+
+        # Discard the closing quote
+        self.consume()
+        
+        token_type = PG_Type.STRING
+        return PG_Token(
+            token_type=token_type,
+            token_text=buf
+        )
 
     def NAME(self):
         buf = self.consume()
@@ -179,6 +198,7 @@ if __name__ == "__main__":
     True False and or 
     > < == <= >= 
     if elif else while 
+    "A test string: 10 9, ; .ouauht."
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()

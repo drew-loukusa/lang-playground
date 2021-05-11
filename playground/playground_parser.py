@@ -66,8 +66,9 @@ class PlaygroundParser(AbstractParser):
             root = self.assign()
 
         # Bool Expression 
-        elif self.LA(1) in {
-                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT,
+        elif self.LA(1) in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             root = self.bool_expr()
             self.match(PG_Type.SEMI_COLON)
@@ -158,7 +159,7 @@ class PlaygroundParser(AbstractParser):
     def bool_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             raise ParsingError(f"Expecting an bool expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
@@ -177,7 +178,7 @@ class PlaygroundParser(AbstractParser):
     def and_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             raise ParsingError(f"Expecting an and expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
@@ -196,7 +197,7 @@ class PlaygroundParser(AbstractParser):
     def comp_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             raise ParsingError(f"Expecting a comp expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
@@ -234,7 +235,7 @@ class PlaygroundParser(AbstractParser):
     def add_expr(self): 
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         root = None 
@@ -253,7 +254,7 @@ class PlaygroundParser(AbstractParser):
     def mult_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.TRUE, PG_Type.FALSE 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
             }:
             raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
         
@@ -283,6 +284,8 @@ class PlaygroundParser(AbstractParser):
             root = self.match(PG_Type.INT)
         elif self.LA(1) == PG_Type.FLOAT:
             root = self.match(PG_Type.FLOAT)
+        elif self.LA(1) == PG_Type.STRING:
+            root = self.match(PG_Type.STRING)
         elif self.LA(1) == PG_Type.TRUE:
             root = self.match(PG_Type.TRUE)
         elif self.LA(1) == PG_Type.FALSE:
@@ -320,6 +323,9 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
+                print("A test string");
+                a = "String stored in a";
+                print(a);
                 if(True){
                     print(True);
                 }

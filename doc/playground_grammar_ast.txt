@@ -34,9 +34,10 @@ mult_expr: atom ( ^ mult_op atom)* ;
 atom:   NAME    | 
         INT     | 
         FLOAT   | 
+        STRING  |
         'True'  |
         'False' |
-        ('(' add_expr ')') -> ^( NAME | INT | FLOAT | 'True' | 'False | add_expr ) ;
+        ('(' add_expr ')') -> ^( NAME | INT | FLOAT | STRING | 'True' | 'False | add_expr ) ;
 
 cmp_op: ^ ( '==' |  '>=' |  '<=' |  '>' |  '<' )      ;
 add_op: ^ ( PLUS | MINUS );

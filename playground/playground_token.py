@@ -13,6 +13,7 @@ class PG_Type(Enum):
     FSLASH = auto()
     INT = auto()
     FLOAT = auto()
+    STRING = auto()
     DOT = auto()
     NAME = auto()
     PRINT = auto()
