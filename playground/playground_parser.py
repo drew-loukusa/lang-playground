@@ -4,6 +4,17 @@ from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
+import functools
+def _reraise_with_rule_name(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            msg = getattr(e, 'message', str(e))
+            raise ParsingError(f"\nrule `{fn.__name__}`: {msg}")
+    return wrapper
+
 class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
         super().__init__(
@@ -28,6 +39,7 @@ class PlaygroundParser(AbstractParser):
             
             return None
 
+    @_reraise_with_rule_name
     def statements(self):
         root = PG_AST(artificial=True, name="$STATEMENTS")
         while self.LA(1) in {
@@ -38,6 +50,7 @@ class PlaygroundParser(AbstractParser):
             root.add_child(self.statement())
         return root 
 
+    @_reraise_with_rule_name
     def statement(self):
         root = None 
         # Parse built in print function 
@@ -70,6 +83,7 @@ class PlaygroundParser(AbstractParser):
         
         return root 
     
+    @_reraise_with_rule_name
     def pg_print(self):
         root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
@@ -80,6 +94,7 @@ class PlaygroundParser(AbstractParser):
         root.add_child(expr)
         return root 
     
+    @_reraise_with_rule_name
     def assign(self):
         name = self.match(PG_Type.NAME)
         root = self.match(PG_Type.ASSIGN)
@@ -89,12 +104,14 @@ class PlaygroundParser(AbstractParser):
         root.add_children(name, expr)
         return root 
 
+    @_reraise_with_rule_name
     def block_stat(self):
         self.match(PG_Type.LCURBRACK)
         root = self.statements()
         self.match(PG_Type.RCURBRACK)
         return root 
 
+    @_reraise_with_rule_name
     def if_stat(self):
         root = self.match(PG_Type.IF)
         test = self.bool_expr()
@@ -109,6 +126,7 @@ class PlaygroundParser(AbstractParser):
         
         return root 
     
+    @_reraise_with_rule_name
     def elif_stat(self):
         root = self.match(PG_Type.ELIF)
         test = self.bool_expr()
@@ -123,10 +141,12 @@ class PlaygroundParser(AbstractParser):
         
         return root 
 
+    @_reraise_with_rule_name
     def else_stat(self):
         self.match(PG_Type.ELSE)
         return self.block_stat()
 
+    @_reraise_with_rule_name
     def while_stat(self):
         root = self.match(PG_Type.WHILE)
         test = self.bool_expr()
@@ -134,6 +154,7 @@ class PlaygroundParser(AbstractParser):
         root.add_children(test, block)
         return root 
     
+    @_reraise_with_rule_name
     def bool_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -152,6 +173,7 @@ class PlaygroundParser(AbstractParser):
         
         return root if root != None else left
 
+    @_reraise_with_rule_name
     def and_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -170,6 +192,7 @@ class PlaygroundParser(AbstractParser):
         
         return root if root != None else left
 
+    @_reraise_with_rule_name
     def comp_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -190,6 +213,7 @@ class PlaygroundParser(AbstractParser):
         
         return root if root != None else left
 
+    @_reraise_with_rule_name
     def cmp_op(self):
         root = None 
         if self.LA(1) == PG_Type.LT:
@@ -206,6 +230,7 @@ class PlaygroundParser(AbstractParser):
             raise ParsingError(f"Expecting a comparison operator; found {self.LT(1)} on line {self.input.line_number}")
         return root 
 
+    @_reraise_with_rule_name
     def add_expr(self): 
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -224,6 +249,7 @@ class PlaygroundParser(AbstractParser):
         
         return root if root != None else left
         
+    @_reraise_with_rule_name
     def mult_expr(self):
         if self.LA(1) not in { 
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
@@ -248,6 +274,7 @@ class PlaygroundParser(AbstractParser):
 
         return root if root != None else left
 
+    @_reraise_with_rule_name
     def atom(self):
         root = None 
         if self.LA(1) == PG_Type.NAME:
@@ -268,6 +295,7 @@ class PlaygroundParser(AbstractParser):
             raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
         return root 
 
+    @_reraise_with_rule_name
     def add_op(self):
         root = None 
         if self.LA(1) == PG_Type.PLUS:
@@ -278,6 +306,7 @@ class PlaygroundParser(AbstractParser):
             raise ParsingError(f"Expecting an add op ('+' or '-'); found {self.LT(1)} on line {self.input.line_number}")
         return root 
 
+    @_reraise_with_rule_name
     def mult_op(self):
         root = None
         if self.LA(1) == PG_Type.STAR:
@@ -326,6 +355,8 @@ if __name__ == "__main__":
                 while (a > 0) { print(a); a = a - 1; }
                 if True { a; } elif False { b; } elif True { a; } else { b; }
                 if True { a; } else { b; }
+                if False { b } else { print(a); }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
-    print(AST.to_string_tree())
+    if AST:
+        print(AST.to_string_tree())
