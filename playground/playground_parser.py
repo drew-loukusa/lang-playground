@@ -87,7 +87,7 @@ class PlaygroundParser(AbstractParser):
     def pg_print(self):
         root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
-        expr = self.add_expr()
+        expr = self.bool_expr()
         self.match(PG_Type.RPAREN)
         self.match(PG_Type.SEMI_COLON)
 
@@ -320,6 +320,9 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
+                if(True){
+                    print(True);
+                }
                 5 + 5;
                 10 + 10;
                 5 - 5;
@@ -355,7 +358,7 @@ if __name__ == "__main__":
                 while (a > 0) { print(a); a = a - 1; }
                 if True { a; } elif False { b; } elif True { a; } else { b; }
                 if True { a; } else { b; }
-                if False { b } else { print(a); }
+                if False { b; } else { print(a); }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     if AST:

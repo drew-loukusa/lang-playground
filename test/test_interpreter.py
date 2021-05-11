@@ -72,7 +72,20 @@ def test_bool_7(capfd):
     ans_str = "True"
     run_stdout_test(capfd, in_str, ans_str)
 
+def test_bool_8(capfd):
+    in_str = "print( (False or False) );"
+    ans_str = "False"
+    run_stdout_test(capfd, in_str, ans_str)
 
+def test_bool_9(capfd):
+    in_str = "print( (False and False) );"
+    ans_str = "False"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_bool_9(capfd):
+    in_str = "print(False and False);"
+    ans_str = "False"
+    run_stdout_test(capfd, in_str, ans_str)
 
 # Test scoping rules
 def test_nested_1(capfd):
@@ -95,3 +108,7 @@ def test_nested_2(capfd):
     """
     run_stdout_test(capfd, in_str, "5")
 
+def test_cond_8(capfd):
+    in_str = "if(True){print(True);}"
+    ans_str = "True"
+    run_stdout_test(capfd, in_str, ans_str)
