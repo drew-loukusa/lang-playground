@@ -15,7 +15,8 @@ statement: ^ ( print_stat
             | while_stat )
             ; 
 
-print_stat: 'print' '(' bool_expr ')' ';'   -> ^( 'print' bool_expr ) ;
+print_stat: 'print' '(' arg_list ? ')' ';'   -> ^( 'print' arg_list ? ) ;
+arg_list: bool_expr ( ',' bool_expr ) * -> ^($ARG_LIST bool_expr + );
 assign_stat: NAME '=' bool_expr ';'         -> ^( '=' NAME bool_expr ) ; 
 expr_stat:   bool_expr ';'                  -> ^( bool_expr ) ;
 block_stat:  '{' statements '}'             -> ^( statements ) ; 

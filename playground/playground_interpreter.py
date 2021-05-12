@@ -172,12 +172,22 @@ class PlaygroundInterpreter:
 
     def _print(self, t: PG_AST):
         """ 
-            Prints out the result of 't's only substree.
+            Prints out the result of 't's only substree using pythons built in print.
+            t may have a single child, which will be an artificial node with name 
+            $ARG_LIST containing a list of arguments.
+
+            Each argument in the $ARG_LIST.children list will be executed, and printed
+            on a single line. A new line will be appended automatically.
 
             Returns None
         """
-        expr = t.children[0]
-        print( self._exec(expr) )
+        if len(t.children) > 0:
+            arg_list = t.children[0]
+            for arg in arg_list.children:
+                print( self._exec(arg), end='')
+            print()
+        else:
+            print()
 
     def _assign(self, t: PG_AST):
         """ 
@@ -355,7 +365,10 @@ while (a > 0) {
 print("A test string");
 a = "String stored in a";
 print(a);
-
+a = 5;
+b = 3;
+c = 2;
+print("a: ", a, ", b: ", b, ", c: ", c);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

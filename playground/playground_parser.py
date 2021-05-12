@@ -88,13 +88,29 @@ class PlaygroundParser(AbstractParser):
     def pg_print(self):
         root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
-        expr = self.bool_expr()
+        expr_list = None 
+        if self.LA(1) in { 
+                PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
+                PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
+            }:
+            expr_list = self.arg_list()
         self.match(PG_Type.RPAREN)
         self.match(PG_Type.SEMI_COLON)
 
-        root.add_child(expr)
+        if expr_list != None:
+            root.add_child(expr_list)
         return root 
-    
+
+    @_reraise_with_rule_name
+    def arg_list(self):
+        root = PG_AST(artificial=True, name="$ARG_LIST")
+        root.add_child(self.bool_expr())
+
+        while self.LA(1) == PG_Type.COMMA:
+            self.match(PG_Type.COMMA)
+            root.add_child(self.bool_expr())
+        return root 
+
     @_reraise_with_rule_name
     def assign(self):
         name = self.match(PG_Type.NAME)
@@ -365,6 +381,9 @@ if __name__ == "__main__":
                 if True { a; } elif False { b; } elif True { a; } else { b; }
                 if True { a; } else { b; }
                 if False { b; } else { print(a); }
+
+                print(a, b, 10, 5, "hello");
+                print();
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     if AST:

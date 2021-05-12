@@ -2,6 +2,7 @@ from enum import Enum, auto
 from abstract.abs_token import AbstractToken 
 class PG_Type(Enum):
     SEMI_COLON = auto()
+    COMMA = auto()
     ASSIGN = auto()
     LPAREN = auto()
     RPAREN = auto()

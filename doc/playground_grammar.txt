@@ -15,7 +15,8 @@ statement:  print_stat  |
             block_stat
             ; 
 
-print_stat: 'print' LPAREN bool_expr RPAREN SEMI_COLON ;
+print_stat: 'print' '(' arg_list ? ')' ';'  ;
+arg_list: bool_expr ( ',' bool_expr ) * ;
 assign_stat: NAME ASSIGN bool_expr SEMI_COLON ; 
 expr_stat: bool_expr SEMI_COLON ;
 block_stat: '{' statements '}' ;

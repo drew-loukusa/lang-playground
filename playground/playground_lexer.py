@@ -36,6 +36,12 @@ class PlaygroundLexer(AbstractLexer):
                     token_type=PG_Type.SEMI_COLON,
                     token_text=self.consume()
                 )
+        
+            elif self.c == ',':
+                return PG_Token(
+                    token_type=PG_Type.COMMA,
+                    token_text=self.consume()
+                )
                 
             elif self.c == '=':
                 token_type = PG_Type.ASSIGN
