@@ -14,10 +14,10 @@ Current programing constructs that it supports:
 * Boolean expressions
 * Conditional statements (if, elif, else, while)
 * Nested scopes (block statements)
+* Functions
 
 Next on the list to be added:
 * Improved strings (being able to escape chars, string subsitution etc)
-* functions
 * Forward references
 * User defined data types (classes or structs, or both)
 
