@@ -107,6 +107,9 @@ class PlaygroundInterpreter:
                  t.children[0].name == "$ARG_LIST":
                 self._func_call(t)
 
+            elif token_type == PG_Type.DEF:
+                self._func_def(t)
+
             elif token_type == PG_Type.ASSIGN:  
                 self._assign(t)
 
@@ -194,6 +197,29 @@ class PlaygroundInterpreter:
         else:
             print()
 
+    def _func_def(self, t: PG_AST):
+        """ 
+            Defines a function. 
+
+            Raises an exception if a function is already defined with that name in the current scope, 
+            or any parent scopes.
+
+            Returns None
+        """
+        print("FUNCTION DEF NOT YET IMPLEMENTED")
+        print("function name:", t.children[0].token.text)
+        print("function params:")
+        if len(t.children[1].children) > 0:
+            param_list = t.children[1]
+            for param in param_list.children:
+                print( param )
+
+        print("Function statements:")
+        if len(t.children[2].children) > 0:
+            stat_list = t.children[2]
+            for stmt in stat_list.children:
+                print( stmt )
+
     def _func_call(self, t: PG_AST):
         """ 
             Executes a function call.
@@ -213,6 +239,9 @@ class PlaygroundInterpreter:
 
             Assigns the result of 't's right subtree 
             to the symbol referenced by 't's left subtree, (a leaf node)
+
+            The scope where the symbol was originally defined is located,
+            then the symbol is given it's new value in said scope.
 
             Returns None
         """
@@ -391,6 +420,10 @@ foo();
 bar(a);
 foobar(a,b,c);
 foobar(a,b,(a+b));
+def goobar(a, b, c){
+    print(a);
+    print(b + c);
+}
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
