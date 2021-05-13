@@ -17,6 +17,7 @@ class PG_Type(Enum):
     STRING = auto()
     DOT = auto()
     NAME = auto()
+    DEF = auto()
     PRINT = auto()
     TRUE = auto()
     FALSE = auto()

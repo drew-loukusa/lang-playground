@@ -36,4 +36,5 @@ class AST:
             print('| '*tab + f"{self}")
         
         for child in self.children:
-            child.to_string_tree(tab+1)
+            if child != None:
+                child.to_string_tree(tab+1)

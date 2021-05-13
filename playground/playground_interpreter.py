@@ -98,9 +98,14 @@ class PlaygroundInterpreter:
 
             if t.artificial == True and t.name == "$STATEMENTS": 
                 self._statements(t)
-
+            
             elif token_type == PG_Type.PRINT:   
                 self._print(t)
+
+            # Function call 
+            elif token_type == PG_Type.NAME and len(t.children) > 0 and \
+                 t.children[0].name == "$ARG_LIST":
+                self._func_call(t)
 
             elif token_type == PG_Type.ASSIGN:  
                 self._assign(t)
@@ -188,6 +193,19 @@ class PlaygroundInterpreter:
             print()
         else:
             print()
+
+    def _func_call(self, t: PG_AST):
+        """ 
+            Executes a function call.
+            Returns None
+        """
+        print("FUNCTION CALL NOT YET IMPLEMENTED")
+        print("function name:", t.token.text)
+        print("function args:")
+        if len(t.children) > 0:
+            arg_list = t.children[0]
+            for arg in arg_list.children:
+                print( arg )
 
     def _assign(self, t: PG_AST):
         """ 
@@ -369,6 +387,10 @@ a = 5;
 b = 3;
 c = 2;
 print("a: ", a, ", b: ", b, ", c: ", c);
+foo();
+bar(a);
+foobar(a,b,c);
+foobar(a,b,(a+b));
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

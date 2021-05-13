@@ -12,11 +12,16 @@ statement: ^ ( print_stat
             | expr_stat  
             | block_stat 
             | if_stat
-            | while_stat )
+            | while_stat 
+            | func_def )
             ; 
 
+arg_list: bool_expr ? |
+          bool_expr ( ',' bool_expr )+ 
+          -> ^($ARG_LIST bool_expr * );
+
+
 print_stat: 'print' '(' arg_list ? ')' ';'   -> ^( 'print' arg_list ? ) ;
-arg_list: bool_expr ( ',' bool_expr ) * -> ^($ARG_LIST bool_expr + );
 assign_stat: NAME '=' bool_expr ';'         -> ^( '=' NAME bool_expr ) ; 
 expr_stat:   bool_expr ';'                  -> ^( bool_expr ) ;
 block_stat:  '{' statements '}'             -> ^( statements ) ; 
@@ -26,19 +31,36 @@ elif_stat:  ^ 'elif' bool_expr block_stat elif_stat * else_stat ? ;
 else_stat:    'else' block_stat -> ^( block_stat );
 while_stat: ^ 'while' bool_expr block_stat ;
 
+func_def: 'def' NAME '(' id_list ')' block_stat -> ^( 'def' NAME id_list block_stat ) ;
+func_call: NAME '(' arg_list ')' ';' -> ^( NAME arg_list ) ; 
+
+id_list:  NAME ? |
+          NAME ( ',' NAME )+ 
+          -> ^($ID_LIST NAME * );
+
 bool_expr: and_expr ( ^ 'or' and_expr ) * ;
 and_expr: comp_expr ( ^ 'and' comp_expr ) * ; 
 comp_expr: add_expr ( ^ cmp_op add_expr ) * ; 
 
 add_expr: mult_expr ( ^ add_op mult_expr)* ; 
 mult_expr: atom ( ^ mult_op atom)* ;
-atom:   NAME    | 
+atom:   func_call |
+        NAME    | 
         INT     | 
         FLOAT   | 
         STRING  |
         'True'  |
         'False' |
-        ('(' add_expr ')') -> ^( NAME | INT | FLOAT | STRING | 'True' | 'False | add_expr ) ;
+        ('(' add_expr ')')      -> 
+        
+        ^(func_call | 
+        NAME    | 
+        INT     | 
+        FLOAT   | 
+        STRING  | 
+        'True'  | 
+        'False  | 
+        add_expr) ;
 
 cmp_op: ^ ( '==' |  '>=' |  '<=' |  '>' |  '<' )      ;
 add_op: ^ ( PLUS | MINUS );

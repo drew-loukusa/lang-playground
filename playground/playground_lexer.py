@@ -6,6 +6,7 @@ class PlaygroundLexer(AbstractLexer):
         super().__init__(input_str)
 
         self.reserved_names = {
+            'def': PG_Type.DEF,
             'print': PG_Type.PRINT,
             'True': PG_Type.TRUE,
             'False': PG_Type.FALSE,
@@ -205,6 +206,7 @@ if __name__ == "__main__":
     > < == <= >= 
     if elif else while 
     "A test string: 10 9, ; .ouauht."
+    def
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
