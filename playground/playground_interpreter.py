@@ -7,6 +7,7 @@ class UnsupportedOperationException(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 class Scope:
     def __init__(self, name=None):
         self.name = name 
@@ -41,6 +42,11 @@ class Scope:
             cur_scope = cur_scope.parent 
         return None 
 
+class Function:
+    def __init__(self, name: str, params: Scope, code: PG_AST):
+        self.name = name 
+        self.params = params
+        self.code = code 
 
 class PlaygroundInterpreter:
 
@@ -50,14 +56,14 @@ class PlaygroundInterpreter:
         self.root = None
         self.parser = None
 
-    def _push_scope(self): 
+    def _push_scope(self, name=""): 
         """ 
            Creates a new scope, places new scope in child list of the 
            current scope, and then sets the current scope to the new scope.
            
            Returns None 
         """
-        new_scope = Scope()
+        new_scope = Scope(name=name)
         new_scope.depth = self.current_space.depth + 1
         new_scope.parent = self.current_space
         self.current_space.children.append(new_scope)
@@ -206,32 +212,47 @@ class PlaygroundInterpreter:
 
             Returns None
         """
-        print("FUNCTION DEF NOT YET IMPLEMENTED")
-        print("function name:", t.children[0].token.text)
-        print("function params:")
+        name = t.children[0].token.text
+        params = []
         if len(t.children[1].children) > 0:
             param_list = t.children[1]
             for param in param_list.children:
-                print( param )
+                params.append(param.token.text)
+        
+        code = t.children[2]
 
-        print("Function statements:")
-        if len(t.children[2].children) > 0:
-            stat_list = t.children[2]
-            for stmt in stat_list.children:
-                print( stmt )
+        new_func = Function(name=name, params=params, code=code)
+        self.current_space.symbols[name] = new_func
+
 
     def _func_call(self, t: PG_AST):
         """ 
             Executes a function call.
             Returns None
+
+            FUTURE FEATUER: WILL OPTIONALY RETURN VALUES
         """
-        print("FUNCTION CALL NOT YET IMPLEMENTED")
-        print("function name:", t.token.text)
-        print("function args:")
+        name = t.token.text 
+        args_list = []
         if len(t.children) > 0:
-            arg_list = t.children[0]
-            for arg in arg_list.children:
-                print( arg )
+            for arg in t.children[0].children:
+                args_list.append(
+                    self._exec(arg)
+                )
+
+        func = self._load(t)
+
+        if len(args_list) < len(func.params):
+            raise Exception(f"Function {name} called, but parameters were missing")
+    
+        if len(args_list) > len(func.params):
+            raise Exception(f"Function {name} called, but too many parameters were given")
+        
+        self._push_scope(name=f"func_scope_{name}")
+        for param, arg in zip(func.params, args_list):
+            self.current_space.symbols[param] = arg
+
+        self._statements(func.code)
 
     def _assign(self, t: PG_AST):
         """ 
@@ -261,7 +282,7 @@ class PlaygroundInterpreter:
 
     def _load(self, t: PG_AST):
         """ 
-            Returns the value refrenced by the symbol in 't',
+            Returns the value or object refrenced by the symbol in 't',
             if it exists in the current scope, or any parent scopes.   
         """
         return self.current_space.resolve(t.token.text)
@@ -416,14 +437,25 @@ a = 5;
 b = 3;
 c = 2;
 print("a: ", a, ", b: ", b, ", c: ", c);
-foo();
-bar(a);
-foobar(a,b,c);
-foobar(a,b,(a+b));
 def goobar(a, b, c){
+    print("func goobar called!");
     print(a);
     print(b + c);
 }
+goobar(1, 2, 3);
+def foo(d, e, f){
+    print("func foo called!");
+    print("d: ", d);
+    print("e + f: ", e + f);
+}
+foo(1, 2, 3);
+
+def noParams(){
+    print("func noParams called!");
+    print("This func has no params");
+}
+noParams();
+
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
