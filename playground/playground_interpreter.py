@@ -253,6 +253,7 @@ class PlaygroundInterpreter:
             self.current_space.symbols[param] = arg
 
         self._statements(func.code)
+        self._pop_scope()
 
     def _assign(self, t: PG_AST):
         """ 
@@ -446,7 +447,8 @@ goobar(1, 2, 3);
 def foo(d, e, f){
     print("func foo called!");
     print("d: ", d);
-    print("e + f: ", e + f);
+    print("e: ", e);
+    print("f: ", f);
 }
 foo(1, 2, 3);
 
@@ -456,6 +458,20 @@ def noParams(){
 }
 noParams();
 
+foo(5, 6, 7);
+
+{
+    foo(3, 1, 2);
+}
+
+def outer(outA){
+    def inner(inA){
+        print("Inner a: ", inA);
+    }
+    inner(10);
+    print("outer a: ", outA);
+}
+outer(15);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
