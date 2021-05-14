@@ -8,6 +8,13 @@ It is a dynamically typed language which copies its syntax heavily from Python (
 
 In it's current form, it is made up of a hand built parser, which generates an AST, which I then feed to a hand-written high level interpreter.
 
+Because the interpreter is written in Python, I do not have to directly handle a lot of the difficult implementation details.
+I can lean on Python's typing system, Exception system, object system, etc etc, to be my backend for my types, my functions, my errors etc. 
+
+I would _maybe_ like to change this in the future, but right now this is necessary since I want to focus on the bigger details of language implementation. 
+
+If I was to switch to a different language, like C or Java, I would have to put in a considerable amount of more work into my backend.
+
 Current programing constructs that it supports:
 * Data types: Int, Float, Bools, Strings
 * Addition, subtraction, multiplication, division on said basic data types 
