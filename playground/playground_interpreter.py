@@ -474,7 +474,6 @@ def outer(outA){
     print("outer a: ", outA);
 }
 outer(15);
-inner(10);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
