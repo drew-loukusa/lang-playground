@@ -13,7 +13,8 @@ statement: ^ ( print_stat
             | block_stat 
             | if_stat
             | while_stat 
-            | func_def )
+            | func_def 
+            | class_def )
             ; 
 
 arg_list: bool_expr ? |
@@ -21,10 +22,10 @@ arg_list: bool_expr ? |
           -> ^($ARG_LIST bool_expr * );
 
 
-print_stat: 'print' '(' arg_list ? ')' ';'   -> ^( 'print' arg_list ? ) ;
-assign_stat: NAME '=' bool_expr ';'         -> ^( '=' NAME bool_expr ) ; 
-expr_stat:   bool_expr ';'                  -> ^( bool_expr ) ;
-block_stat:  '{' statements '}'             -> ^( statements ) ; 
+print_stat: 'print' '(' arg_list ? ')' ';'      -> ^( 'print' arg_list ? ) ;
+assign_stat: NAME ('.' NAME)? '=' bool_expr ';' -> ^( '=' (NAME | '.' NAME NAME) bool_expr ) ; 
+expr_stat:   bool_expr ';'                      -> ^( bool_expr ) ;
+block_stat:  '{' statements '}'                 -> ^( statements ) ; 
 
 if_stat:    ^ 'if'   bool_expr block_stat elif_stat ? else_stat ? ;
 elif_stat:  ^ 'elif' bool_expr block_stat elif_stat * else_stat ? ;
@@ -33,6 +34,9 @@ while_stat: ^ 'while' bool_expr block_stat ;
 
 func_def: 'def' NAME '(' id_list ')' block_stat -> ^( 'def' NAME id_list block_stat ) ;
 func_call: NAME '(' arg_list ')' ';' -> ^( NAME arg_list ) ; 
+
+class_def: ^ 'Class' NAME block_stat ;
+dotted_expr: NAME ^ '.' ( NAME | func_call ) ;
 
 id_list:  NAME ? |
           NAME ( ',' NAME )+ 
@@ -44,7 +48,8 @@ comp_expr: add_expr ( ^ cmp_op add_expr ) * ;
 
 add_expr: mult_expr ( ^ add_op mult_expr)* ; 
 mult_expr: atom ( ^ mult_op atom)* ;
-atom:   func_call |
+atom:   dotted_expr |
+        func_call |
         NAME    | 
         INT     | 
         FLOAT   | 
@@ -53,7 +58,8 @@ atom:   func_call |
         'False' |
         ('(' add_expr ')')      -> 
         
-        ^(func_call | 
+     ^( dotted_expr |
+        func_call | 
         NAME    | 
         INT     | 
         FLOAT   | 

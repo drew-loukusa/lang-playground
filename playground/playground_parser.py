@@ -19,7 +19,7 @@ class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
         super().__init__(
             input_lexer=PlaygroundLexer(input_str),
-            k=2,
+            k=4,
             AST_Class=PG_AST
         )
         self.testing = False
@@ -70,7 +70,8 @@ class PlaygroundParser(AbstractParser):
             root = self.block_stat()
         
         # Assignment 
-        elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.ASSIGN:
+        elif self.LA(1) == PG_Type.NAME and \
+            (self.LA(2) == PG_Type.ASSIGN or self.LA(4) == PG_Type.ASSIGN):
             root = self.assign()
 
         # Bool Expression 
@@ -136,6 +137,13 @@ class PlaygroundParser(AbstractParser):
     @_reraise_with_rule_name
     def assign(self):
         name = self.match(PG_Type.NAME)
+        dot_name = None 
+        if self.LA(1) == PG_Type.DOT:
+            dot_name = self.match(PG_Type.DOT)
+            rhs = self.match(PG_Type.NAME)
+            dot_name.add_children(name, rhs)
+            name = dot_name
+
         root = self.match(PG_Type.ASSIGN)
         expr = self.bool_expr()
         self.match(PG_Type.SEMI_COLON)
@@ -214,7 +222,28 @@ class PlaygroundParser(AbstractParser):
         )
         self.match(PG_Type.RPAREN)
         return root 
-    
+
+    @_reraise_with_rule_name
+    def class_def(self):
+        root = self.match(PG_Type.CLASS)
+        class_name = self.match(PG_Type.NAME)
+        class_body = self.statements()
+        root.add_children(class_name, class_body)
+        return root 
+
+    @_reraise_with_rule_name
+    def dotted_expr(self):
+        LHS = self.match(PG_Type.NAME)
+        root = self.match(PG_Type.DOT)
+        RHS = None 
+        if self.LA(2) == PG_Type.LPAREN:
+            RHS = self.func_call()
+        else:
+            RHS = self.match(PG_Type.NAME)
+
+        root.add_children(LHS, RHS)
+        return root 
+
     @_reraise_with_rule_name
     def bool_expr(self):
         if self.LA(1) not in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE }:
@@ -323,7 +352,9 @@ class PlaygroundParser(AbstractParser):
     @_reraise_with_rule_name
     def atom(self):
         root = None 
-        if self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.LPAREN:
+        if self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.DOT:
+            root = self.dotted_expr()
+        elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.LPAREN:
             root = self.func_call()
         elif self.LA(1) == PG_Type.NAME:
             root = self.match(PG_Type.NAME)
@@ -370,6 +401,7 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
+                
                 print("A test string");
                 a = "String stored in a";
                 print(a);
@@ -425,6 +457,22 @@ if __name__ == "__main__":
                 def doogar(a, b){
                     print(a);
                     print(b);
+                }
+                foo.bar;
+                foo.bar();
+                a = foo.bar;
+                a = foo.bar();
+                foo.bar = a;
+                """
+    code2=""" 
+                Class Goober {
+                    this.a;
+                    def Goober(a){
+                        this.a = a;
+                    }
+                    def printA(){
+                        print(this.a);
+                    }
                 }
                 """
     AST = PlaygroundParser(input_str=input_str).program()

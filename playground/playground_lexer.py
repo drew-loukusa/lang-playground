@@ -16,6 +16,7 @@ class PlaygroundLexer(AbstractLexer):
             'elif': PG_Type.ELIF,
             'else': PG_Type.ELSE,
             'while': PG_Type.WHILE,
+            'Class': PG_Type.CLASS,
         }
     
     def next_token(self) -> PG_Token:
@@ -31,7 +32,13 @@ class PlaygroundLexer(AbstractLexer):
             elif self.c == '#': 
                 self._comment()
                 continue
-        
+                
+            elif self.c == '.':
+                return PG_Token(
+                    token_type=PG_Type.DOT,
+                    token_text=self.consume()
+                )
+
             elif self.c == ';':
                 return PG_Token(
                     token_type=PG_Type.SEMI_COLON,
@@ -207,6 +214,8 @@ if __name__ == "__main__":
     if elif else while 
     "A test string: 10 9, ; .ouauht."
     def
+    Class
+    .
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
