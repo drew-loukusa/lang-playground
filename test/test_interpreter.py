@@ -108,7 +108,92 @@ def test_nested_2(capfd):
     """
     run_stdout_test(capfd, in_str, "5")
 
-def test_cond_8(capfd):
+# Test Conditional 
+def test_cond_1(capfd):
     in_str = "if(True){print(True);}"
     ans_str = "True"
     run_stdout_test(capfd, in_str, ans_str)
+
+def test_cond_2(capfd):
+    in_str = "if(False){print(\"False\");}else{print(\"True\");}"
+    ans_str = "True"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_cond_3(capfd):
+    in_str = "if(False){print(\"False\");}elif(True){print(\"True\");}"
+    ans_str = "True"
+    run_stdout_test(capfd, in_str, ans_str)
+
+# Functions
+def test_func_1(capfd):
+    in_str = """
+    def foo(){
+        print("foo called");
+    }
+    foo();
+    """
+    ans_str = "foo called"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_func_2(capfd):
+    in_str = """
+    def foo(a){
+        print("foo called, a: ", a);
+    }
+    foo(5);
+    """
+    ans_str = "foo called, a: 5"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_func_3(capfd):
+    in_str = """
+    def foo(a){
+        print("foo called, a: ", a);
+    }
+    {
+        foo(5);
+    }
+    """
+    ans_str = "foo called, a: 5"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_func_4(capfd):
+    in_str = """
+    def foo(a){
+        print("foo called, a: ", a);
+    }
+    foo();
+    """
+    with pytest.raises(TypeError):
+        pgp = PlaygroundInterpreter()
+        pgp.interp(input_str=in_str)
+
+
+def test_func_5(capfd):
+    in_str = """
+    def foo(a){
+        print("foo called, a: ", a);
+    }
+    foo(5, 10);
+    """
+    with pytest.raises(TypeError):
+        pgp = PlaygroundInterpreter()
+        pgp.interp(input_str=in_str)
+
+def test_func_6(capfd):
+    in_str = """
+    def outer(outA){
+        def inner(inA){
+            print("Inner a: ", inA);
+        }
+        inner(10);
+        print("outer a: ", outA);
+    }
+    outer(15);
+    inner(10);
+    """
+    with pytest.raises(NameError):
+        pgp = PlaygroundInterpreter()
+        pgp.interp(input_str=in_str)
+
+

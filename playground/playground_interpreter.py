@@ -27,7 +27,7 @@ class Scope:
             if symbol in cur_scope.symbols:
                 return cur_scope.symbols[symbol]
             cur_scope = cur_scope.parent 
-        raise Exception(f"Symbol {symbol} could not be found!")
+        raise NameError(f"Symbol {symbol} could not be found!")
 
     def resolve_scope(self, symbol: str):
         """ 
@@ -242,11 +242,13 @@ class PlaygroundInterpreter:
 
         func = self._load(t)
 
-        if len(args_list) < len(func.params):
-            raise Exception(f"Function {name} called, but parameters were missing")
+        args_len = len(args_list)
+        params_len = len(func.params)
+        if args_len < params_len:
+            raise TypeError(f"{name}() called, but {params_len - args_len} parameters were missing")
     
-        if len(args_list) > len(func.params):
-            raise Exception(f"Function {name} called, but too many parameters were given")
+        if args_len > params_len:
+            raise TypeError(f"Function {name} called, but too many parameters were given")
         
         self._push_scope(name=f"func_scope_{name}")
         for param, arg in zip(func.params, args_list):
@@ -472,6 +474,7 @@ def outer(outA){
     print("outer a: ", outA);
 }
 outer(15);
+inner(10);
 """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
