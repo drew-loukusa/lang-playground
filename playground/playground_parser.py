@@ -50,7 +50,7 @@ class PlaygroundParser(AbstractParser):
         while self.LA(1) in {
                 PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, 
                 PG_Type.FLOAT, PG_Type.LCURBRACK, PG_Type.TRUE, PG_Type.FALSE,
-                PG_Type.IF, PG_Type.WHILE, PG_Type.DEF,
+                PG_Type.IF, PG_Type.WHILE, PG_Type.DEF, PG_Type.CLASS,
             }:
             root.add_child(self.statement())
         return root 
@@ -61,6 +61,9 @@ class PlaygroundParser(AbstractParser):
         # Parse built in print function 
         if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
+
+        elif self.LA(1) == PG_Type.CLASS:
+            root = self.class_def()
 
         elif self.LA(1) == PG_Type.DEF:
             root = self.func_def()
@@ -227,7 +230,7 @@ class PlaygroundParser(AbstractParser):
     def class_def(self):
         root = self.match(PG_Type.CLASS)
         class_name = self.match(PG_Type.NAME)
-        class_body = self.statements()
+        class_body = self.block_stat()
         root.add_children(class_name, class_body)
         return root 
 
@@ -463,8 +466,7 @@ if __name__ == "__main__":
                 a = foo.bar;
                 a = foo.bar();
                 foo.bar = a;
-                """
-    code2=""" 
+    
                 Class Goober {
                     this.a;
                     def Goober(a){

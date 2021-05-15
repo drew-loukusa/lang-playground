@@ -42,11 +42,17 @@ class Scope:
             cur_scope = cur_scope.parent 
         return None 
 
-class Function:
+class PG_Function:
     def __init__(self, name: str, params: Scope, code: PG_AST):
         self.name = name 
         self.params = params
-        self.code = code 
+        self.code = code  
+
+class PG_Class:
+    def __init__(self, name: str):
+        self.name    = name 
+        self.attrs   = dict()
+        self.methods = dict()
 
 class PlaygroundInterpreter:
 
@@ -210,7 +216,7 @@ class PlaygroundInterpreter:
             Raises an exception if a function is already defined with that name in the current scope, 
             or any parent scopes.
 
-            Returns None
+            Returns a PG_Function object
         """
         name = t.children[0].token.text
         params = []
@@ -221,16 +227,22 @@ class PlaygroundInterpreter:
         
         code = t.children[2]
 
-        new_func = Function(name=name, params=params, code=code)
+        new_func = PG_Function(name=name, params=params, code=code)
         self.current_space.symbols[name] = new_func
-
+        return new_func
 
     def _func_call(self, t: PG_AST):
         """ 
-            Executes a function call.
+            Executes a function call. 
+            Loads the previously created function object (which holds the definition
+            for the function) and uses it to execute the function. 
+
+            The function object holds the function name, function parameters,
+            and function code (as a PG_AST sub-tree)
+
             Returns None
 
-            FUTURE FEATUER: WILL OPTIONALY RETURN VALUES
+            FUTURE FEATURE: WILL OPTIONALY RETURN VALUES
         """
         name = t.token.text 
         args_list = []
@@ -256,6 +268,29 @@ class PlaygroundInterpreter:
 
         self._statements(func.code)
         self._pop_scope()
+
+    def _class_def(self, t: PG_AST):
+        # Create PG_Class object 
+        name = t.children[0].token.text
+        class_def = PG_Class(name=name)
+        # Iterate through the statements:
+        for statement in t.children[1]:
+            # Fill attrs
+            # Create func objects to put in methods
+            if statement.token.type == PG_Type.DEF:
+                func_name = statement.children[0].token.text
+                class_def.methods[func_name] = self._func_def(statement)
+            elif statement.token.type == PG_Type.DOT:
+                pass
+            self._exec(statement)
+
+        # Place class object into current scope/symbol table 
+
+    def _class_instantiation(self, t: PG_AST):
+        pass
+
+    def _dotted_load(self, t: PG_AST):
+        pass
 
     def _assign(self, t: PG_AST):
         """ 
@@ -390,90 +425,65 @@ class PlaygroundInterpreter:
 
 if __name__ == "__main__":
     code = """
-print(10 < True);
-if(True and True){print(True);}
-if(True or True){print(True);}
-if(False or True){print(True);}
-if(True){print(True);} 
-print((True and True))
-;
-a = 5;
-b = 5;
-print(a + b);
+    print(10 < True);
+    if(True and True){print(True);}
+    if(True or True){print(True);}
+    if(False or True){print(True);}
+    if(True){print(True);} 
+    print((True and True));
+    a = 5;b = 5; print(a + b);
 
-print(5 - 2);
-print(5 * 2);
-print(5 / 2);
+    print(5 - 2); print(5 * 2); print(5 / 2);
 
-a = 5 / 2;
-print(a + 3);
-foo = 3 * 5;
-print(foo + (a * (3  -  4)));
-print(3 - 4);
-print(2.4 + 1.3);
+    a = 5 / 2; print(a + 3); foo = 3 * 5;
+    print(foo + (a * (3  -  4)));
+    print(3 - 4); print(2.4 + 1.3);
 
-a = 2;
-b = 3;
-c = 2;
-{
-    c = 1;
-    print(c);
-}
-print(c);
+    a = 2; b = 3; c = 2;
+    { c = 1; print(c); } print(c);
 
-if (5 < 6){
-    print("5 is less than 6");
-}
-elif (6 > 3){
-    print("6 is greater than 3");
-}
-print("Printing 10 through 1 in decreasing order");
-a = 10;
-while (a > 0) {
-    print(a);
-    a = a - 1;
-}
-print("A test string");
-a = "String stored in a";
-print(a);
-a = 5;
-b = 3;
-c = 2;
-print("a: ", a, ", b: ", b, ", c: ", c);
-def goobar(a, b, c){
-    print("func goobar called!");
-    print(a);
-    print(b + c);
-}
-goobar(1, 2, 3);
-def foo(d, e, f){
-    print("func foo called!");
-    print("d: ", d);
-    print("e: ", e);
-    print("f: ", f);
-}
-foo(1, 2, 3);
+    if (5 < 6){ print("5 is less than 6"); }
+    elif (6 > 3){ print("6 is greater than 3"); }
+    print("Printing 10 through 1 in decreasing order");
+    a = 10;
+    while (a > 0) { print(a); a = a - 1; }
+    print("A test string");
 
-def noParams(){
-    print("func noParams called!");
-    print("This func has no params");
-}
-noParams();
+    a = "String stored in a"; print(a);
 
-foo(5, 6, 7);
+    a = 5; b = 3; c = 2;
+    print("a: ", a, ", b: ", b, ", c: ", c);
 
-{
-    foo(3, 1, 2);
-}
-
-def outer(outA){
-    def inner(inA){
-        print("Inner a: ", inA);
+    def goobar(a, b, c){
+        print("func goobar called!");
+        print(a);
+        print(b + c);
     }
-    inner(10);
-    print("outer a: ", outA);
-}
-outer(15);
-"""
+    goobar(1, 2, 3);
+    def foo(d, e, f){
+        print("func foo called!");
+        print("d: ", d);
+        print("e: ", e);
+        print("f: ", f);
+    }
+    foo(1, 2, 3);
+
+    def noParams(){
+        print("func noParams called!");
+        print("This func has no params");
+    }
+    noParams();
+
+    foo(5, 6, 7); { foo(3, 1, 2); }
+
+    def outer(outA){
+        def inner(inA){
+            print("Inner a: ", inA);
+        }
+        inner(10);
+        print("outer a: ", outA);
+    }
+    outer(15);
+    """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
