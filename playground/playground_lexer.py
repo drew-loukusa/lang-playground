@@ -134,7 +134,7 @@ class PlaygroundLexer(AbstractLexer):
             elif self.isDigit():
                 return self.NUMBER()
                 
-            elif self.isLetter():
+            elif self.isLetter() or self.c == '_':
                 return self.NAME()
 
             else:
@@ -170,7 +170,7 @@ class PlaygroundLexer(AbstractLexer):
 
     def NAME(self):
         buf = self.consume()
-        while self.isLetter():
+        while self.isLetter() or self.c == '_':
             buf += self.consume()
         
         token_type = PG_Type.NAME
@@ -216,6 +216,9 @@ if __name__ == "__main__":
     def
     Class
     .
+    underscored_name
+    _underscored_name
+    _underscored_name_
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()

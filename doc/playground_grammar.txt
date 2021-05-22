@@ -1,3 +1,6 @@
+# NOTE: This grammar is not being actively mantained.
+# For an up to date grammar see the _ast version.
+
 # Simple grammar for adding numbers and printing the results of adding numbers
 
 # A grammar for doing simple math
