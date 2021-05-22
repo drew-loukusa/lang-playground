@@ -21,3 +21,23 @@ The parser accepts the input string as input, and returns an AST of type PG_AST.
 # Typing
 
 I'm leaning on Python's type system to do most of the lifting for me. I can parse ints (of any size) and floats, and then I just pass them off to Python to do type promotion, and operations.
+
+# Classes
+
+A class is a "class" keyword followed by an identifier, 
+and then a block statement. 
+
+The block statement can be empty.
+
+Any attributes defined in the block statement (but outside of the constructor) can be accessed _without_ having to create an instance of the class; you can think of them as static attributes.
+They can be modified in the same way as constructor bound attributes. They of course can be accesed from an instance and changed per instance. 
+
+Any attributes defined inside the constructor will ONLY be available if an instance of the class is created. 
+
+Multiple constructors _are_ allowed. Which one is run depends on what arguments are passed upon 
+class instantiation.
+
+Static methods are _not_ yet supported.
+
+If a method parameter name conflicts with a class attribute name, use "this" as a dotted prefix 
+to access the class attr; the local parameter will shadow the class attr otherwise.
