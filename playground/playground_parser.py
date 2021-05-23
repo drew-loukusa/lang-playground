@@ -476,6 +476,10 @@ if __name__ == "__main__":
                         print(this.a);
                     }
                 }
+                goober;
+                Class Fooby{
+                    poopy;
+                }
                 """
     AST = PlaygroundParser(input_str=input_str).program()
     if AST:

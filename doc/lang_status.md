@@ -29,15 +29,17 @@ and then a block statement.
 
 The block statement can be empty.
 
-Any attributes defined in the block statement (but outside of the constructor) can be accessed _without_ having to create an instance of the class; you can think of them as static attributes.
-They can be modified in the same way as constructor bound attributes. They of course can be accesed from an instance and changed per instance. 
+Alright, I've decided. Since I'm not as advanced as python (I don't have the "everything is an object abstraction" going for me right now), I'm going to take the simpler route:
 
-Any attributes defined inside the constructor will ONLY be available if an instance of the class is created. 
+NO STATIC CLASS ATTRS, at least for right now. Maybe I can add keywords later to make that a reality.
 
-Multiple constructors _are_ allowed. Which one is run depends on what arguments are passed upon 
-class instantiation.
+Class attributes are defined IN the class body. 
+Multiple constructors _are_ allowed, and you _cannot_ define new class instance attrs inside a constructor. 
 
 Static methods are _not_ yet supported.
 
 If a method parameter name conflicts with a class attribute name, use "this" as a dotted prefix 
 to access the class attr; the local parameter will shadow the class attr otherwise.
+
+Any class attr not assigned a value, either in the class body, or via the constructor will automatically be given 
+the value of 'None'.

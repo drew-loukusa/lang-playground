@@ -1,3 +1,6 @@
+from copy import deepcopy
+from collections import defaultdict
+
 from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_parser import PlaygroundParser
@@ -15,6 +18,9 @@ class Scope:
         self.symbols: dict = {}
         self.parent: Scope = None 
         self.children: list[Scope, ...] = []
+    
+    def __repr__(self):
+        return f"< Scope: {self.name}, depth: {self.depth}, parent: {self.parent.name}, num_children {len(self.children)}"
 
     def resolve(self, symbol: str):
         """ 
@@ -48,11 +54,18 @@ class PG_Function:
         self.params = params
         self.code = code  
 
-class PG_Class:
-    def __init__(self, name: str):
-        self.name    = name 
-        self.attrs   = dict()
-        self.methods = dict()
+    def __repr__(self):
+        return f"<Function: {self.name}, params: {self.params} >"
+
+class PG_Class(Scope):
+    def __init__(self, name: str, is_class_def=False):
+        # Is this the "original" object? I.E. the class definition?
+        self.is_class_def = is_class_def
+        super().__init__(name=name)
+        self.methods = defaultdict(dict)
+    
+    def __repr__(self):
+        return f"< Class: {self.name}, attrs: {self.attrs} methods: {self.methods} >"
 
 class PlaygroundInterpreter:
 
@@ -62,14 +75,14 @@ class PlaygroundInterpreter:
         self.root = None
         self.parser = None
 
-    def _push_scope(self, name=""): 
+    def _push_scope(self, name="", scope_to_use=None): 
         """ 
            Creates a new scope, places new scope in child list of the 
            current scope, and then sets the current scope to the new scope.
            
            Returns None 
         """
-        new_scope = Scope(name=name)
+        new_scope = Scope(name=name) if scope_to_use is None else scope_to_use
         new_scope.depth = self.current_space.depth + 1
         new_scope.parent = self.current_space
         self.current_space.children.append(new_scope)
@@ -110,6 +123,9 @@ class PlaygroundInterpreter:
 
             if t.artificial == True and t.name == "$STATEMENTS": 
                 self._statements(t)
+
+            elif token_type == PG_Type.CLASS:   
+                self._class_def(t)
             
             elif token_type == PG_Type.PRINT:   
                 self._print(t)
@@ -252,7 +268,28 @@ class PlaygroundInterpreter:
                     self._exec(arg)
                 )
 
-        func = self._load(t)
+        obj = self._load(t)
+
+        # Because class instantiation looks like a function call, handle that here 
+        # Well, it IS a function call, but it's a special case of one, where we call a constructor
+        # if it is defined 
+
+        # So, look up the instance, or create it if it does not yet exist.
+        # Retrieve the class instance and method, push class instance as scope, call method 
+
+        class_instance, constructor = None, None
+        if type(obj) is PG_Class:
+            # If the retrieved object is the class definition object, then we are creating a new instance
+            if obj.is_class_def: 
+                class_instance, constructor = self._class_instantiation(
+                    class_def=obj, 
+                    args_list=args_list
+                )
+            else:
+                # If instance is NOT class def
+                pass
+
+        func = obj if constructor is None else constructor 
 
         args_len = len(args_list)
         params_len = len(func.params)
@@ -262,7 +299,14 @@ class PlaygroundInterpreter:
         if args_len > params_len:
             raise TypeError(f"Function {name} called, but too many parameters were given")
         
-        self._push_scope(name=f"func_scope_{name}")
+        # You can push the CLASS instance here when constructing new class instances
+        if constructor is None:
+            self._push_scope(name=f"func_scope_{name}")
+        else:
+            self._push_scope(
+                name="", 
+                scope_to_use=class_instance
+            )
         for param, arg in zip(func.params, args_list):
             self.current_space.symbols[param] = arg
 
@@ -272,22 +316,59 @@ class PlaygroundInterpreter:
     def _class_def(self, t: PG_AST):
         # Create PG_Class object 
         name = t.children[0].token.text
-        class_def = PG_Class(name=name)
+        class_def = PG_Class(name=name, is_class_def=True)
         # Iterate through the statements:
-        for statement in t.children[1]:
-            # Fill attrs
+        for statement in t.children[1].children:
+            # Fill in attrs
+            stmnt_tk_type = statement.token.type
+            if stmnt_tk_type in { PG_Type.ASSIGN, PG_Type.NAME }:
+                if stmnt_tk_type == PG_Type.ASSIGN:
+                    attr_name = statement.children[0].token.text
+                    rhs = statement.children[1]
+                    class_def.symbols[attr_name] = self._exec(rhs)
+
+                elif stmnt_tk_type == PG_Type.NAME:
+                    stmnt_text = statement.token.text
+                    class_def.symbols[stmnt_text] = None
+
             # Create func objects to put in methods
-            if statement.token.type == PG_Type.DEF:
-                func_name = statement.children[0].token.text
-                class_def.methods[func_name] = self._func_def(statement)
-            elif statement.token.type == PG_Type.DOT:
+            elif stmnt_tk_type == PG_Type.DEF:
+                func_name    = statement.children[0].token.text
+                class_method = self._func_def(statement)
+                params_len   = len(class_method.params)
+                class_def.methods[func_name][params_len] = class_method
+            elif stmnt_tk_type == PG_Type.DOT:
+                # NOTE: I may not need to handle dotted exprs inside the class def, only in class instantiation
+                print("TODO: HANDLE DOTTED EXPRESSIONS INSIDE CLASS")
+                print("TODO: Handle using THIS.ATTR for differentiating between param and class attr")
                 pass
-            self._exec(statement)
-
+            else:
+                self._exec(statement)
+        
         # Place class object into current scope/symbol table 
+        self.current_space.symbols[name] = class_def
 
-    def _class_instantiation(self, t: PG_AST):
-        pass
+    def _class_instantiation(self, class_def: PG_Class, args_list):
+        # Lookup in the class def, a function that shares the name of the
+        # class, and has the same number of parameters as the called constructor
+        # That will be the correct constructor to call.
+        new_instance = deepcopy(class_def)
+        
+        # Based on the length of the args list, select the correct constructor 
+        # If a constructor does not exist for the length, raise an exception
+        # However, if the length is zero, and there is no constructor that takes zero args,
+        # DO NOT raise an exception. Simply init any attrs that don't get assigned a value to None
+        args_len = len(args_list)
+        name = new_instance.name
+        constructor = None
+        constructors = new_instance.methods.get(name)
+
+        # If there is at least one constructor defined, retrieve it
+        # but only if it has the correct number of params
+        if constructors != None:
+            constructor = constructors.get(args_len)
+            
+        return new_instance, constructor
 
     def _dotted_load(self, t: PG_AST):
         pass
@@ -425,65 +506,94 @@ class PlaygroundInterpreter:
 
 if __name__ == "__main__":
     code = """
-    print(10 < True);
-    if(True and True){print(True);}
-    if(True or True){print(True);}
-    if(False or True){print(True);}
-    if(True){print(True);} 
-    print((True and True));
-    a = 5;b = 5; print(a + b);
+        print(10 < True);
+        if(True and True){print(True);}
+        if(True or True){print(True);}
+        if(False or True){print(True);}
+        if(True){print(True);} 
+        print((True and True));
+        a = 5;b = 5; print(a + b);
 
-    print(5 - 2); print(5 * 2); print(5 / 2);
+        print(5 - 2); print(5 * 2); print(5 / 2);
 
-    a = 5 / 2; print(a + 3); foo = 3 * 5;
-    print(foo + (a * (3  -  4)));
-    print(3 - 4); print(2.4 + 1.3);
+        a = 5 / 2; print(a + 3); foo = 3 * 5;
+        print(foo + (a * (3  -  4)));
+        print(3 - 4); print(2.4 + 1.3);
 
-    a = 2; b = 3; c = 2;
-    { c = 1; print(c); } print(c);
+        a = 2; b = 3; c = 2;
+        { c = 1; print(c); } print(c);
 
-    if (5 < 6){ print("5 is less than 6"); }
-    elif (6 > 3){ print("6 is greater than 3"); }
-    print("Printing 10 through 1 in decreasing order");
-    a = 10;
-    while (a > 0) { print(a); a = a - 1; }
-    print("A test string");
+        if (5 < 6){ print("5 is less than 6"); }
+        elif (6 > 3){ print("6 is greater than 3"); }
+        print("Printing 10 through 1 in decreasing order");
+        a = 10;
+        while (a > 0) { print(a); a = a - 1; }
+        print("A test string");
 
-    a = "String stored in a"; print(a);
+        a = "String stored in a"; print(a);
 
-    a = 5; b = 3; c = 2;
-    print("a: ", a, ", b: ", b, ", c: ", c);
+        a = 5; b = 3; c = 2;
+        print("a: ", a, ", b: ", b, ", c: ", c);
 
-    def goobar(a, b, c){
-        print("func goobar called!");
-        print(a);
-        print(b + c);
-    }
-    goobar(1, 2, 3);
-    def foo(d, e, f){
-        print("func foo called!");
-        print("d: ", d);
-        print("e: ", e);
-        print("f: ", f);
-    }
-    foo(1, 2, 3);
-
-    def noParams(){
-        print("func noParams called!");
-        print("This func has no params");
-    }
-    noParams();
-
-    foo(5, 6, 7); { foo(3, 1, 2); }
-
-    def outer(outA){
-        def inner(inA){
-            print("Inner a: ", inA);
+        def goobar(a, b, c){
+            print("func goobar called!");
+            print(a);
+            print(b + c);
         }
-        inner(10);
-        print("outer a: ", outA);
+        goobar(1, 2, 3);
+        def foo(d, e, f){
+            print("func foo called!");
+            print("d: ", d);
+            print("e: ", e);
+            print("f: ", f);
+        }
+        foo(1, 2, 3);
+
+        def noParams(){
+            print("func noParams called!");
+            print("This func has no params");
+        }
+        noParams();
+
+        foo(5, 6, 7); { foo(3, 1, 2); }
+
+        def outer(outA){
+            def inner(inA){
+                print("Inner a: ", inA);
+            }
+            inner(10);
+            print("outer a: ", outA);
+        }
+        outer(15);
+    """
+    code = """
+    Class FooClass {
+        class_attr_a = 5;
+        class_attr_b; 
+
+        def FooClass(){
+            print("Empty constructor!");
+        }
+
+        def FooClass(a){
+            print("Constructor called! I have one arg!");
+            print("Assign a to 'class_attr_a' !");
+            print("class_attr_a before: ", class_attr_a);
+            class_attr_a = a;
+            print("class_attr_a: ", class_attr_a);
+        }
+
+        def NotAConstructor(){
+            print("I don't have any params, and I'm not a constructor");
+        }
+
+        def another_normal_class_method_with_params(a, b, c){
+            print("I have 3 params, a, b, c");
+        }
     }
-    outer(15);
+    instance_foo = FooClass(10);
+    #instance_foo.NotAConstructor();
+    
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
