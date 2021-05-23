@@ -130,10 +130,13 @@ class PlaygroundInterpreter:
             elif token_type == PG_Type.PRINT:   
                 self._print(t)
 
+            elif token_type == PG_Type.DOT:
+                return self._dotted_expr(t)
+
             # Function call 
             elif token_type == PG_Type.NAME and len(t.children) > 0 and \
                  t.children[0].name == "$ARG_LIST":
-                self._func_call(t)
+                return self._func_call(t)
 
             elif token_type == PG_Type.DEF:
                 self._func_def(t)
@@ -225,6 +228,36 @@ class PlaygroundInterpreter:
         else:
             print()
 
+    def _dotted_expr(self, t: PG_AST):
+        lhs = t.children[0]
+        rhs = t.children[1]
+
+        instance = self._load(lhs)
+
+        rhs_tk_type = rhs.token.type 
+        rhs_child_len = len(rhs.children)
+        # Dotted function call 
+        if rhs_tk_type == PG_Type.NAME and rhs_child_len > 0 and \
+                 rhs.children[0].name == "$ARG_LIST":
+            self._push_scope(
+                name="", 
+                scope_to_use=instance
+            )
+            result = self._func_call(rhs)
+            self._pop_scope()
+            return result 
+
+        # Dotted field access
+        elif rhs_tk_type == PG_Type.NAME:
+            self._push_scope(
+                name="", 
+                scope_to_use=instance
+            )
+            result = self._load(rhs)
+            self._pop_scope()
+            return result
+
+
     def _func_def(self, t: PG_AST):
         """ 
             Defines a function. 
@@ -300,18 +333,25 @@ class PlaygroundInterpreter:
             raise TypeError(f"Function {name} called, but too many parameters were given")
         
         # You can push the CLASS instance here when constructing new class instances
-        if constructor is None:
+        if constructor is None and class_instance is None:
             self._push_scope(name=f"func_scope_{name}")
         else:
             self._push_scope(
                 name="", 
                 scope_to_use=class_instance
             )
+
         for param, arg in zip(func.params, args_list):
             self.current_space.symbols[param] = arg
 
-        self._statements(func.code)
+        # Don't try to "call" a constructor if none defined on class
+        if not (class_instance != None and constructor is None and args_len == 0):
+            self._statements(func.code)
+
         self._pop_scope()
+
+        if class_instance != None:
+            return class_instance
 
     def _class_def(self, t: PG_AST):
         # Create PG_Class object 
@@ -573,6 +613,8 @@ if __name__ == "__main__":
 
         def FooClass(){
             print("Empty constructor!");
+            print("class_attr_b: ", class_attr_b);
+            print("class_attr_a: ", class_attr_a);
         }
 
         def FooClass(a){
@@ -585,6 +627,7 @@ if __name__ == "__main__":
 
         def NotAConstructor(){
             print("I don't have any params, and I'm not a constructor");
+            print("here's class_attr_a: ", class_attr_a);
         }
 
         def another_normal_class_method_with_params(a, b, c){
@@ -592,7 +635,9 @@ if __name__ == "__main__":
         }
     }
     instance_foo = FooClass(10);
-    #instance_foo.NotAConstructor();
+    instance_foo = FooClass();
+    instance_foo.NotAConstructor();
+    print("Accessing class attr outside the class: ", instance_foo.class_attr_a);
     
     """
     PI = PlaygroundInterpreter()

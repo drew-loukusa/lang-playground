@@ -19,10 +19,13 @@ class AST:
         token = str(self.token) if self.token is not None else None
         artificial = self.name + " " if self.name is not None else None
 
+        token_info = None
         if self.artificial: 
-            return 'ARTIFICIAL - ' + artificial
-
-        return token
+            token_info = 'ARTIFICIAL - ' + artificial
+        else:
+            token_info = token
+        ast_rep = f"<PG_AST: {token_info}>"
+        return ast_rep
 
     def to_string_tree(self, tab=0):
         if len(self.children) == 0: 
