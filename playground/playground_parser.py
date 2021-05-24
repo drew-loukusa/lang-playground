@@ -4,61 +4,77 @@ from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
-import functools
+from functools import wraps
+
+
 def _reraise_with_rule_name(fn):
-    @functools.wraps(fn)
+    @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
-            msg = getattr(e, 'message', str(e))
+            msg = getattr(e, "message", str(e))
             raise ParsingError(f"\nrule `{fn.__name__}`: {msg}")
+
     return wrapper
+
 
 class PlaygroundParser(AbstractParser):
     def __init__(self, input_str):
-        super().__init__(
-            input_lexer=PlaygroundLexer(input_str),
-            k=4,
-            AST_Class=PG_AST
-        )
+        super().__init__(input_lexer=PlaygroundLexer(input_str), k=4, AST_Class=PG_AST)
         self.testing = False
 
-        self.expr_LA_set = { 
-            PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, 
-            PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE 
+        self.expr_LA_set = {
+            PG_Type.LPAREN,
+            PG_Type.NAME,
+            PG_Type.INT,
+            PG_Type.FLOAT,
+            PG_Type.STRING,
+            PG_Type.TRUE,
+            PG_Type.FALSE,
         }
 
-    def program(self): 
+    def program(self):
         try:
             root = self.statements()
             if self.LA(1) != PG_Type.EOF:
-                raise ParsingError(f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}")
-            return root 
+                raise ParsingError(
+                    f"Failed to reach EOF before parsing halted. Last token retrieved: {self.LT(1)} on line {self.input.line_number}"
+                )
+            return root
         except ParsingError as pe:
             print("Syntax Error:", pe)
 
             # If tests are being run, re-raise exception
             if self.testing:
-                raise pe 
-            
+                raise pe
+
             return None
 
     @_reraise_with_rule_name
     def statements(self):
         root = PG_AST(artificial=True, name="$STATEMENTS")
         while self.LA(1) in {
-                PG_Type.LPAREN, PG_Type.NAME, PG_Type.PRINT, PG_Type.INT, 
-                PG_Type.FLOAT, PG_Type.LCURBRACK, PG_Type.TRUE, PG_Type.FALSE,
-                PG_Type.IF, PG_Type.WHILE, PG_Type.DEF, PG_Type.CLASS,
-            }:
+            PG_Type.LPAREN,
+            PG_Type.NAME,
+            PG_Type.PRINT,
+            PG_Type.INT,
+            PG_Type.FLOAT,
+            PG_Type.LCURBRACK,
+            PG_Type.TRUE,
+            PG_Type.FALSE,
+            PG_Type.IF,
+            PG_Type.WHILE,
+            PG_Type.DEF,
+            PG_Type.CLASS,
+        }:
             root.add_child(self.statement())
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def statement(self):
-        root = None 
-        # Parse built in print function 
+        root = None
+        # Parse built in print function
         if self.LA(1) == PG_Type.PRINT:
             root = self.pg_print()
 
@@ -67,42 +83,43 @@ class PlaygroundParser(AbstractParser):
 
         elif self.LA(1) == PG_Type.DEF:
             root = self.func_def()
-        
+
         # Block statement
         elif self.LA(1) == PG_Type.LCURBRACK:
             root = self.block_stat()
-        
-        # Assignment 
-        elif self.LA(1) == PG_Type.NAME and \
-            (self.LA(2) == PG_Type.ASSIGN or self.LA(4) == PG_Type.ASSIGN):
+
+        # Assignment
+        elif self.LA(1) == PG_Type.NAME and (
+            self.LA(2) == PG_Type.ASSIGN or self.LA(4) == PG_Type.ASSIGN
+        ):
             root = self.assign()
 
-        # Bool Expression 
+        # Bool Expression
         elif self.LA(1) in self.expr_LA_set:
             root = self.bool_expr()
             self.match(PG_Type.SEMI_COLON)
-        
+
         elif self.LA(1) == PG_Type.IF:
             root = self.if_stat()
 
         elif self.LA(1) == PG_Type.WHILE:
             root = self.while_stat()
 
-        else: 
-            raise ParsingError(f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}")
-        
-        return root 
-    
+        else:
+            raise ParsingError(
+                f"Expecting a statement; found {self.LT(1)} on line {self.input.line_number}"
+            )
+
+        return root
+
     @_reraise_with_rule_name
     def pg_print(self):
         root = self.match(PG_Type.PRINT)
         self.match(PG_Type.LPAREN)
-        root.add_child( 
-            self.arg_list() 
-        ) 
+        root.add_child(self.arg_list())
         self.match(PG_Type.RPAREN)
         self.match(PG_Type.SEMI_COLON)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def arg_list(self):
@@ -117,30 +134,26 @@ class PlaygroundParser(AbstractParser):
                 self.match(PG_Type.COMMA)
                 root.add_child(self.bool_expr())
 
-        return root 
+        return root
 
     def id_list(self):
         root = PG_AST(artificial=True, name="$ID_LIST")
 
         # An id list CAN be empty
         if self.LA(1) == PG_Type.NAME:
-            root.add_child(
-                self.match(PG_Type.NAME)
-            )
+            root.add_child(self.match(PG_Type.NAME))
 
             # Check for additional parameters
             while self.LA(1) == PG_Type.COMMA:
                 self.match(PG_Type.COMMA)
-                root.add_child(
-                    self.match(PG_Type.NAME)
-                )
+                root.add_child(self.match(PG_Type.NAME))
 
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def assign(self):
         name = self.match(PG_Type.NAME)
-        dot_name = None 
+        dot_name = None
         if self.LA(1) == PG_Type.DOT:
             dot_name = self.match(PG_Type.DOT)
             rhs = self.match(PG_Type.NAME)
@@ -152,14 +165,14 @@ class PlaygroundParser(AbstractParser):
         self.match(PG_Type.SEMI_COLON)
 
         root.add_children(name, expr)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def block_stat(self):
         self.match(PG_Type.LCURBRACK)
         root = self.statements()
         self.match(PG_Type.RCURBRACK)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def if_stat(self):
@@ -173,9 +186,9 @@ class PlaygroundParser(AbstractParser):
 
         if self.LA(1) == PG_Type.ELSE:
             root.add_child(self.else_stat())
-        
-        return root 
-    
+
+        return root
+
     @_reraise_with_rule_name
     def elif_stat(self):
         root = self.match(PG_Type.ELIF)
@@ -188,8 +201,8 @@ class PlaygroundParser(AbstractParser):
 
         if self.LA(1) == PG_Type.ELSE:
             root.add_child(self.else_stat())
-        
-        return root 
+
+        return root
 
     @_reraise_with_rule_name
     def else_stat(self):
@@ -202,29 +215,25 @@ class PlaygroundParser(AbstractParser):
         test = self.bool_expr()
         block = self.block_stat()
         root.add_children(test, block)
-        return root 
-    
+        return root
+
     @_reraise_with_rule_name
     def func_def(self):
         root = self.match(PG_Type.DEF)
-        root.add_child( self.match(PG_Type.NAME) )
+        root.add_child(self.match(PG_Type.NAME))
         self.match(PG_Type.LPAREN)
-        root.add_child( self.id_list() )
+        root.add_child(self.id_list())
         self.match(PG_Type.RPAREN)
-        root.add_child(
-            self.block_stat()
-        )
+        root.add_child(self.block_stat())
         return root
 
     @_reraise_with_rule_name
     def func_call(self):
         root = self.match(PG_Type.NAME)
         self.match(PG_Type.LPAREN)
-        root.add_child(
-            self.arg_list()
-        )
+        root.add_child(self.arg_list())
         self.match(PG_Type.RPAREN)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def class_def(self):
@@ -232,74 +241,84 @@ class PlaygroundParser(AbstractParser):
         class_name = self.match(PG_Type.NAME)
         class_body = self.block_stat()
         root.add_children(class_name, class_body)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def dotted_expr(self):
         LHS = self.match(PG_Type.NAME)
         root = self.match(PG_Type.DOT)
-        RHS = None 
+        RHS = None
         if self.LA(2) == PG_Type.LPAREN:
             RHS = self.func_call()
         else:
             RHS = self.match(PG_Type.NAME)
 
         root.add_children(LHS, RHS)
-        return root 
+        return root
 
     @_reraise_with_rule_name
     def bool_expr(self):
-        if self.LA(1) not in {PG_Type.LPAREN, PG_Type.NAME, PG_Type.INT, PG_Type.FLOAT, PG_Type.STRING, PG_Type.TRUE, PG_Type.FALSE }:
-            raise ParsingError(f"Expecting an bool expression; found {self.LT(1)} on line {self.input.line_number}")
-        root = None 
+        if self.LA(1) not in self.expr_LA_set:
+            raise ParsingError(
+                f"Expecting an bool expression; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        root = None
         left = self.and_expr()
 
         while self.LA(1) == PG_Type.OR:
             if root != None:
-                left = root 
+                left = root
             root = self.match(PG_Type.OR)
             right = self.and_expr()
             root.add_children(left, right)
-        
+
         return root if root != None else left
 
     @_reraise_with_rule_name
     def and_expr(self):
         if self.LA(1) not in self.expr_LA_set:
-            raise ParsingError(f"Expecting an and expression; found {self.LT(1)} on line {self.input.line_number}")
-        root = None 
+            raise ParsingError(
+                f"Expecting an and expression; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        root = None
         left = self.comp_expr()
 
         while self.LA(1) == PG_Type.AND:
             if root != None:
-                left = root 
+                left = root
             root = self.match(PG_Type.AND)
             right = self.comp_expr()
             root.add_children(left, right)
-        
+
         return root if root != None else left
 
     @_reraise_with_rule_name
     def comp_expr(self):
         if self.LA(1) not in self.expr_LA_set:
-            raise ParsingError(f"Expecting a comp expression; found {self.LT(1)} on line {self.input.line_number}")
-        root = None 
+            raise ParsingError(
+                f"Expecting a comp expression; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        root = None
         left = self.add_expr()
 
-        while self.LA(1) in { 
-                PG_Type.LT, PG_Type.LE, PG_Type.GT, PG_Type.GE, PG_Type.EQ 
-            }:
+        while self.LA(1) in {
+            PG_Type.LT,
+            PG_Type.LE,
+            PG_Type.GT,
+            PG_Type.GE,
+            PG_Type.EQ,
+        }:
             if root != None:
-                left = root 
+                left = root
             root = self.cmp_op()
             right = self.add_expr()
             root.add_children(left, right)
-        
+
         return root if root != None else left
 
     @_reraise_with_rule_name
     def cmp_op(self):
-        root = None 
+        root = None
         if self.LA(1) == PG_Type.LT:
             root = self.match(PG_Type.LT)
         elif self.LA(1) == PG_Type.LE:
@@ -310,42 +329,48 @@ class PlaygroundParser(AbstractParser):
             root = self.match(PG_Type.GE)
         elif self.LA(1) == PG_Type.EQ:
             root = self.match(PG_Type.EQ)
-        else: 
-            raise ParsingError(f"Expecting a comparison operator; found {self.LT(1)} on line {self.input.line_number}")
-        return root 
+        else:
+            raise ParsingError(
+                f"Expecting a comparison operator; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        return root
 
     @_reraise_with_rule_name
-    def add_expr(self): 
+    def add_expr(self):
         if self.LA(1) not in self.expr_LA_set:
-            raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
-        root = None 
+            raise ParsingError(
+                f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        root = None
         left = self.mult_expr()
 
-        while self.LA(1) in { PG_Type.PLUS, PG_Type.MINUS }:
+        while self.LA(1) in {PG_Type.PLUS, PG_Type.MINUS}:
             if root != None:
-                left = root 
+                left = root
             root = self.add_op()
             right = self.mult_expr()
             root.add_children(left, right)
-        
+
         return root if root != None else left
-        
+
     @_reraise_with_rule_name
     def mult_expr(self):
         if self.LA(1) not in self.expr_LA_set:
-            raise ParsingError(f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}")
-        
-        root = None 
-        left = self.atom() 
+            raise ParsingError(
+                f"Expecting an add expression; found {self.LT(1)} on line {self.input.line_number}"
+            )
 
-        while self.LA(1) in { PG_Type.STAR, PG_Type.FSLASH }:
-            # Root can be set if we're parsing a continuous string of 
+        root = None
+        left = self.atom()
+
+        while self.LA(1) in {PG_Type.STAR, PG_Type.FSLASH}:
+            # Root can be set if we're parsing a continuous string of
             # multiplications:
             # 2 * 2 * 2
-            # Tree looks like = * (2 2), 
+            # Tree looks like = * (2 2),
             #              then * ((* (2 2)) 2)
             if root != None:
-                left = root 
+                left = root
             root = self.mult_op()
             right = self.atom()
             root.add_children(left, right)
@@ -354,7 +379,7 @@ class PlaygroundParser(AbstractParser):
 
     @_reraise_with_rule_name
     def atom(self):
-        root = None 
+        root = None
         if self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.DOT:
             root = self.dotted_expr()
         elif self.LA(1) == PG_Type.NAME and self.LA(2) == PG_Type.LPAREN:
@@ -375,20 +400,24 @@ class PlaygroundParser(AbstractParser):
             self.match(PG_Type.LPAREN)
             root = self.bool_expr()
             self.match(PG_Type.RPAREN)
-        else: 
-            raise ParsingError(f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}")
-        return root 
+        else:
+            raise ParsingError(
+                f"Expecting an atom; found {self.LT(1)} on line {self.input.line_number}"
+            )
+        return root
 
     @_reraise_with_rule_name
     def add_op(self):
-        root = None 
+        root = None
         if self.LA(1) == PG_Type.PLUS:
             root = self.match(PG_Type.PLUS)
         elif self.LA(1) == PG_Type.MINUS:
             root = self.match(PG_Type.MINUS)
-        else: 
-            raise ParsingError(f"Expecting an add op ('+' or '-'); found {self.LT(1)} on line {self.input.line_number}")
-        return root 
+        else:
+            raise ParsingError(
+                f"Expecting an add op ('+' or '-'); found {self.LT(1)} on line {self.input.line_number}"
+            )
+        return root
 
     @_reraise_with_rule_name
     def mult_op(self):
@@ -397,9 +426,12 @@ class PlaygroundParser(AbstractParser):
             root = self.match(PG_Type.STAR)
         elif self.LA(1) == PG_Type.FSLASH:
             root = self.match(PG_Type.FSLASH)
-        else: 
-            raise ParsingError(f"Expecting an mult op ('*' or '/'); found {self.LT(1)} on line {self.input.line_number}") 
-        return root 
+        else:
+            raise ParsingError(
+                f"Expecting an mult op ('*' or '/'); found {self.LT(1)} on line {self.input.line_number}"
+            )
+        return root
+
 
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
