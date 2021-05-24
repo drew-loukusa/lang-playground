@@ -5,7 +5,7 @@ from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
-DEBUG=True
+DEBUG=False
 def _reraise_with_rule_name(fn):
     if DEBUG: return fn
     @wraps(fn)
