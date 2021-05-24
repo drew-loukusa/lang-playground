@@ -82,6 +82,12 @@ class PlaygroundInterpreter:
             and t.children[0].name == "$ARG_LIST"
         )
 
+    def _get_enclosing_class(self):
+        scope = self.current_space 
+        while type(scope) != PG_Class and scope != None:
+            scope = scope.parent
+        return scope
+
     def _exec(self, t: PG_AST):
         """
         Executes node 't' according to it's token type.
@@ -189,7 +195,7 @@ class PlaygroundInterpreter:
         lhs = t.children[0]
         rhs = t.children[1]
 
-        instance = self._load(lhs)
+        instance = self._load(lhs) if lhs.token.text != "this" else None
 
         rhs_tk_type = rhs.token.type
         rhs_child_len = len(rhs.children)
@@ -203,7 +209,12 @@ class PlaygroundInterpreter:
         # Dotted field access
         elif rhs_tk_type is PGT.NAME:
             self._push_scope(name="", scope_to_use=instance)
-            result = self._load(rhs)
+            result = None 
+            if instance != None:
+                result = self._load(rhs)
+            else:
+                result = self._load(rhs, this=True)
+
             self._pop_scope()
             return result
 
@@ -388,6 +399,12 @@ class PlaygroundInterpreter:
 
         if instance_name is None:
             symbol_scope = self.current_space.resolve_scope(name)
+        elif instance_name == "this":
+            symbol_scope = self._get_enclosing_class()
+            if symbol_scope is None:
+                raise UnsupportedOperationException(
+                    "Use of keyword 'this' only supported inside of class methods."
+                )
         else:
             symbol_scope = self._load(lhs.children[0])
 
@@ -398,12 +415,23 @@ class PlaygroundInterpreter:
         # Assign symbol it's new value
         symbol_scope.symbols[name] = value
 
-    def _load(self, t: PG_AST):
+    def _load(self, t: PG_AST, this=False):
         """
         Returns the value or object referenced by the symbol in 't',
         if it exists in the current scope, or any parent scopes.
+
+        If t.token.text == 'this', then function goes up scope tree until it 
+        finds a Class object, which it then returns.
         """
-        return self.current_space.resolve(t.token.text)
+        name = t.token.text
+        symbol_scope = self.current_space 
+        if this:
+            symbol_scope = self._get_enclosing_class()
+            if symbol_scope is None:
+                raise UnsupportedOperationException(
+                    "Use of keyword 'this' only supported inside of class methods."
+                )
+        return symbol_scope.resolve(name)
 
     def _conditional(self, t: PG_AST):
         """
@@ -595,7 +623,10 @@ if __name__ == "__main__":
 
         def func_with_shadowing_param(bar){
             bar = 12;
-            print("Set shadowing func param to: ", bar);
+            print("shadowing func param bar is: ", bar);
+            print("Printing shadowed class attr using keyword 'this': ", this.bar);
+            print("Set shadowed class attr bar to 15");
+            this.bar = 15;
         }
     }
     instance_foo = FooClass(10);

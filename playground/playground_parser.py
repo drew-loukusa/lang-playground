@@ -1,13 +1,13 @@
-import __init__
+from functools import wraps
+
 from abstract.abs_parser import AbstractParser, ParsingError
 from playground_ast import PG_AST
 from playground_token import PG_Type
 from playground_lexer import PlaygroundLexer
 
-from functools import wraps
-
-
+DEBUG=True
 def _reraise_with_rule_name(fn):
+    if DEBUG: return fn
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
@@ -515,6 +515,7 @@ if __name__ == "__main__":
                     goopy = 5;
                 }
                 """
+                
     AST = PlaygroundParser(input_str=input_str).program()
     if AST:
         print(AST.to_string_tree())
