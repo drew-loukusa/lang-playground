@@ -131,7 +131,7 @@ class PlaygroundInterpreter:
                 self._print(t)
 
             elif token_type == PG_Type.DOT:
-                return self._dotted_expr(t)
+                return self._eval_dotted_expr(t)
 
             # Function call 
             elif token_type == PG_Type.NAME and len(t.children) > 0 and \
@@ -228,7 +228,7 @@ class PlaygroundInterpreter:
         else:
             print()
 
-    def _dotted_expr(self, t: PG_AST):
+    def _eval_dotted_expr(self, t: PG_AST):
         lhs = t.children[0]
         rhs = t.children[1]
 
@@ -332,14 +332,14 @@ class PlaygroundInterpreter:
         if args_len > params_len:
             raise TypeError(f"Function {name} called, but too many parameters were given")
         
-        # You can push the CLASS instance here when constructing new class instances
-        if constructor is None and class_instance is None:
-            self._push_scope(name=f"func_scope_{name}")
-        else:
+        # If calling a constructor, push the class as a scope first
+        if constructor != None and class_instance != None:
             self._push_scope(
                 name="", 
                 scope_to_use=class_instance
             )
+
+        self._push_scope(name=f"func_scope_{name}")
 
         for param, arg in zip(func.params, args_list):
             self.current_space.symbols[param] = arg
@@ -349,6 +349,10 @@ class PlaygroundInterpreter:
             self._statements(func.code)
 
         self._pop_scope()
+
+        # If a constructor was called, remove the class scope from the tree
+        if constructor != None and class_instance != None:
+            self._pop_scope()
 
         if class_instance != None:
             return class_instance
@@ -429,15 +433,31 @@ class PlaygroundInterpreter:
         expr = t.children[1]
         value = self._exec(expr)
 
-        # Get the scope where the symbol was originally defined 
-        symbol_scope = self.current_space.resolve_scope(lhs.token.text)
+        # Handle assigning a value to dotted expressions:
+        name, instance_name = None, None
+        if lhs.token.type == PG_Type.DOT:
+            instance_name = lhs.children[0].token.text 
+            name = lhs.children[1].token.text 
+
+        # Normal assignment 
+        else:
+            name = lhs.token.text
+
+        # Get the scope where the symbol was originally defined
+        # For class attributes, this will be a class object  
+        symbol_scope = None 
+
+        if instance_name is None:
+            symbol_scope = self.current_space.resolve_scope(name)
+        else:
+            symbol_scope = self._load(lhs.children[0])
 
         # If none, symbol has not yet been defined
-        if symbol_scope is None: 
+        if symbol_scope is None:    
             symbol_scope = self.current_space
 
         # Assign symbol it's new value 
-        symbol_scope.symbols[lhs.token.text] = value
+        symbol_scope.symbols[name] = value
 
     def _load(self, t: PG_AST):
         """ 
@@ -638,6 +658,8 @@ if __name__ == "__main__":
     instance_foo = FooClass();
     instance_foo.NotAConstructor();
     print("Accessing class attr outside the class: ", instance_foo.class_attr_a);
+    instance_foo.class_attr_a = 10;
+    print("After changing it: ", instance_foo.class_attr_a);
     
     """
     PI = PlaygroundInterpreter()
