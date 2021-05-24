@@ -1,76 +1,19 @@
 from copy import deepcopy
-from collections import defaultdict
 
 from playground_ast import PG_AST
 from playground_token import PG_Type as PGT
 from playground_parser import PlaygroundParser
+from playground_scope import PG_Scope, PG_Function, PG_Class
 
 class UnsupportedOperationException(Exception):
     def __init__(self, message=""):
         self.message = message
         super().__init__(self.message)
 
-
-class Scope:
-    def __init__(self, name=None):
-        self.name = name 
-        self.depth = 0
-        self.symbols: dict = {}
-        self.parent: Scope = None 
-        self.children: list[Scope, ...] = []
-    
-    def __repr__(self):
-        return f"< Scope: {self.name}, depth: {self.depth}, parent: {self.parent.name}, num_children {len(self.children)}"
-
-    def resolve(self, symbol: str):
-        """ 
-           Attempts to locate and return whatever value was assigned to 
-           'symbol' if 'symbol' exists in the current scope, or any 
-           parent scope.
-        """
-        cur_scope = self 
-        while cur_scope != None:
-            if symbol in cur_scope.symbols:
-                return cur_scope.symbols[symbol]
-            cur_scope = cur_scope.parent 
-        raise NameError(f"Symbol {symbol} could not be found!")
-
-    def resolve_scope(self, symbol: str):
-        """ 
-           Attempts to locate and return the scope object of symbol
-           'symbol' if 'symbol' exists in the current scope, or any 
-           parent scope.
-        """
-        cur_scope = self 
-        while cur_scope != None:
-            if symbol in cur_scope.symbols:
-                return cur_scope
-            cur_scope = cur_scope.parent 
-        return None 
-
-class PG_Function:
-    def __init__(self, name: str, params: Scope, code: PG_AST):
-        self.name = name 
-        self.params = params
-        self.code = code  
-
-    def __repr__(self):
-        return f"<Function: {self.name}, params: {self.params} >"
-
-class PG_Class(Scope):
-    def __init__(self, name: str, is_class_def=False):
-        # Is this the "original" object? I.E. the class definition?
-        self.is_class_def = is_class_def
-        super().__init__(name=name)
-        self.methods = defaultdict(dict)
-    
-    def __repr__(self):
-        return f"< Class: {self.name}, attrs: {self.attrs} methods: {self.methods} >"
-
 class PlaygroundInterpreter:
 
     def __init__(self):
-        self.globals = Scope(name="globals")       
+        self.globals = PG_Scope(name="globals")       
         self.current_space = self.globals
         self.root = None
         self.parser = None
@@ -100,7 +43,6 @@ class PlaygroundInterpreter:
             PGT.FALSE 
         }
 
-    
     def _push_scope(self, name="", scope_to_use=None): 
         """ 
            Creates a new scope (if one was not passed in via 'scope_to_use'), 
@@ -109,7 +51,7 @@ class PlaygroundInterpreter:
            
            Returns None 
         """
-        new_scope = Scope(name=name) if scope_to_use is None else scope_to_use
+        new_scope = PG_Scope(name=name) if scope_to_use is None else scope_to_use
         new_scope.depth = self.current_space.depth + 1
         new_scope.parent = self.current_space
         self.current_space.children.append(new_scope)
