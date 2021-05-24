@@ -2,7 +2,7 @@ from copy import deepcopy
 from collections import defaultdict
 
 from playground_ast import PG_AST
-from playground_token import PG_Type
+from playground_token import PG_Type as PGT
 from playground_parser import PlaygroundParser
 
 class UnsupportedOperationException(Exception):
@@ -25,7 +25,7 @@ class Scope:
     def resolve(self, symbol: str):
         """ 
            Attempts to locate and return whatever value was assigned to 
-           'symbol' if 'symobol' exists in the current scope, or any 
+           'symbol' if 'symbol' exists in the current scope, or any 
            parent scope.
         """
         cur_scope = self 
@@ -38,7 +38,7 @@ class Scope:
     def resolve_scope(self, symbol: str):
         """ 
            Attempts to locate and return the scope object of symbol
-           'symbol' if 'symobol' exists in the current scope, or any 
+           'symbol' if 'symbol' exists in the current scope, or any 
            parent scope.
         """
         cur_scope = self 
@@ -75,10 +75,37 @@ class PlaygroundInterpreter:
         self.root = None
         self.parser = None
 
+        self.operators = { 
+            PGT.PLUS, 
+            PGT.MINUS, 
+            PGT.STAR, 
+            PGT.FSLASH
+        }
+
+        self.conditionals = {
+            PGT.IF,
+            PGT.ELIF,
+        }
+
+        self.comparisons = { 
+            PGT.EQ, 
+            PGT.LT, 
+            PGT.LE, 
+            PGT.GT,
+            PGT.GE,
+        }
+
+        self.booleans = { 
+            PGT.TRUE, 
+            PGT.FALSE 
+        }
+
+    
     def _push_scope(self, name="", scope_to_use=None): 
         """ 
-           Creates a new scope, places new scope in child list of the 
-           current scope, and then sets the current scope to the new scope.
+           Creates a new scope (if one was not passed in via 'scope_to_use'), 
+           places new scope in child list of the current scope, and then sets
+           the current scope to the new scope.
            
            Returns None 
         """
@@ -112,6 +139,12 @@ class PlaygroundInterpreter:
         if self.root != None:
             self._program(self.root)
 
+    def is_function_call(self, t: PG_AST):
+        token_type = t.token.type if t.token != None else None
+        return token_type == PGT.NAME and \
+            len(t.children) > 0 and \
+            t.children[0].name == "$ARG_LIST"
+
     def _exec(self, t: PG_AST):
         """ 
             Executes node 't' according to it's token type.
@@ -124,64 +157,49 @@ class PlaygroundInterpreter:
             if t.artificial == True and t.name == "$STATEMENTS": 
                 self._statements(t)
 
-            elif token_type == PG_Type.CLASS:   
+            elif token_type is PGT.CLASS:   
                 self._class_def(t)
             
-            elif token_type == PG_Type.PRINT:   
+            elif token_type is PGT.PRINT:   
                 self._print(t)
 
-            elif token_type == PG_Type.DOT:
-                return self._eval_dotted_expr(t)
+            elif token_type is PGT.DOT:
+                return self._dotted_expr(t)
 
-            # Function call 
-            elif token_type == PG_Type.NAME and len(t.children) > 0 and \
-                 t.children[0].name == "$ARG_LIST":
+            elif self.is_function_call(t):
                 return self._func_call(t)
 
-            elif token_type == PG_Type.DEF:
+            elif token_type is PGT.DEF:
                 self._func_def(t)
 
-            elif token_type == PG_Type.ASSIGN:  
+            elif token_type is PGT.ASSIGN:  
                 self._assign(t)
 
-            elif token_type in {
-                    PG_Type.IF,
-                    PG_Type.ELIF,
-                }: 
+            elif token_type in self.conditionals: 
                 self._conditional(t)
 
-            elif token_type == PG_Type.WHILE:
+            elif token_type == PGT.WHILE:
                 self._while(t)
 
-            elif token_type in { 
-                    PG_Type.PLUS, 
-                    PG_Type.MINUS, 
-                    PG_Type.STAR, 
-                    PG_Type.FSLASH
-                }:
+            elif token_type in self.operators:
                 return self._op(t)
 
-            elif token_type == PG_Type.AND: 
+            elif token_type is PGT.AND: 
                 return self._and(t)
-            elif token_type == PG_Type.OR: 
+
+            elif token_type is PGT.OR: 
                 return self._or(t)
 
-            elif token_type in { 
-                    PG_Type.EQ, 
-                    PG_Type.LT, 
-                    PG_Type.LE, 
-                    PG_Type.GT,
-                    PG_Type.GE,
-                }:
+            elif token_type in self.comparisons:
                 return self._cmp(t)
 
-            elif token_type in { PG_Type.TRUE, PG_Type.FALSE }:    
-                return True if t.token.text == "True" else False
+            elif token_type in self.booleans:    
+                return t.token.text == "True"
 
-            elif token_type == PG_Type.NAME:    return self._load(t)
-            elif token_type == PG_Type.INT:     return int(t.token.text)
-            elif token_type == PG_Type.FLOAT:   return float(t.token.text)
-            elif token_type == PG_Type.STRING:  return str(t.token.text)
+            elif token_type is PGT.NAME:    return self._load(t)
+            elif token_type is PGT.INT:     return int(t.token.text)
+            elif token_type is PGT.FLOAT:   return float(t.token.text)
+            elif token_type is PGT.STRING:  return str(t.token.text)
             else:
                 raise UnsupportedOperationException(f"Node {t.name}: <{t.token}> not handled")
 
@@ -211,7 +229,7 @@ class PlaygroundInterpreter:
 
     def _print(self, t: PG_AST):
         """ 
-            Prints out the result of 't's only substree using pythons built in print.
+            Prints out the result of 't's only subtree using pythons built in print.
             t may have a single child, which will be an artificial node with name 
             $ARG_LIST containing a list of arguments.
 
@@ -228,7 +246,7 @@ class PlaygroundInterpreter:
         else:
             print()
 
-    def _eval_dotted_expr(self, t: PG_AST):
+    def _dotted_expr(self, t: PG_AST):
         lhs = t.children[0]
         rhs = t.children[1]
 
@@ -237,7 +255,7 @@ class PlaygroundInterpreter:
         rhs_tk_type = rhs.token.type 
         rhs_child_len = len(rhs.children)
         # Dotted function call 
-        if rhs_tk_type == PG_Type.NAME and rhs_child_len > 0 and \
+        if rhs_tk_type is PGT.NAME and rhs_child_len > 0 and \
                  rhs.children[0].name == "$ARG_LIST":
             self._push_scope(
                 name="", 
@@ -248,7 +266,7 @@ class PlaygroundInterpreter:
             return result 
 
         # Dotted field access
-        elif rhs_tk_type == PG_Type.NAME:
+        elif rhs_tk_type is PGT.NAME:
             self._push_scope(
                 name="", 
                 scope_to_use=instance
@@ -365,27 +383,22 @@ class PlaygroundInterpreter:
         for statement in t.children[1].children:
             # Fill in attrs
             stmnt_tk_type = statement.token.type
-            if stmnt_tk_type in { PG_Type.ASSIGN, PG_Type.NAME }:
-                if stmnt_tk_type == PG_Type.ASSIGN:
+            if stmnt_tk_type in { PGT.ASSIGN, PGT.NAME }:
+                if stmnt_tk_type == PGT.ASSIGN:
                     attr_name = statement.children[0].token.text
                     rhs = statement.children[1]
                     class_def.symbols[attr_name] = self._exec(rhs)
 
-                elif stmnt_tk_type == PG_Type.NAME:
+                elif stmnt_tk_type == PGT.NAME:
                     stmnt_text = statement.token.text
                     class_def.symbols[stmnt_text] = None
 
             # Create func objects to put in methods
-            elif stmnt_tk_type == PG_Type.DEF:
+            elif stmnt_tk_type is PGT.DEF:
                 func_name    = statement.children[0].token.text
                 class_method = self._func_def(statement)
                 params_len   = len(class_method.params)
                 class_def.methods[func_name][params_len] = class_method
-            elif stmnt_tk_type == PG_Type.DOT:
-                # NOTE: I may not need to handle dotted exprs inside the class def, only in class instantiation
-                print("TODO: HANDLE DOTTED EXPRESSIONS INSIDE CLASS")
-                print("TODO: Handle using THIS.ATTR for differentiating between param and class attr")
-                pass
             else:
                 self._exec(statement)
         
@@ -414,9 +427,6 @@ class PlaygroundInterpreter:
             
         return new_instance, constructor
 
-    def _dotted_load(self, t: PG_AST):
-        pass
-
     def _assign(self, t: PG_AST):
         """ 
             Performs an assignment operation.
@@ -435,7 +445,7 @@ class PlaygroundInterpreter:
 
         # Handle assigning a value to dotted expressions:
         name, instance_name = None, None
-        if lhs.token.type == PG_Type.DOT:
+        if lhs.token.type is PGT.DOT:
             instance_name = lhs.children[0].token.text 
             name = lhs.children[1].token.text 
 
@@ -461,7 +471,7 @@ class PlaygroundInterpreter:
 
     def _load(self, t: PG_AST):
         """ 
-            Returns the value or object refrenced by the symbol in 't',
+            Returns the value or object referenced by the symbol in 't',
             if it exists in the current scope, or any parent scopes.   
         """
         return self.current_space.resolve(t.token.text)
@@ -502,10 +512,10 @@ class PlaygroundInterpreter:
         a = self._exec( t.children[0] )
         b = self._exec( t.children[1] )
 
-        if   token_type == PG_Type.PLUS:    return a + b
-        elif token_type == PG_Type.MINUS:   return a - b
-        elif token_type == PG_Type.STAR:    return a * b
-        elif token_type == PG_Type.FSLASH:  return a / b
+        if   token_type is PGT.PLUS:    return a + b
+        elif token_type is PGT.MINUS:   return a - b
+        elif token_type is PGT.STAR:    return a * b
+        elif token_type is PGT.FSLASH:  return a / b
 
     def _and(self, t: PG_AST):
         """
@@ -558,11 +568,11 @@ class PlaygroundInterpreter:
         a = self._exec( t.children[0] )
         b = self._exec( t.children[1] )
 
-        if   token_type == PG_Type.EQ:  return a == b
-        elif token_type == PG_Type.LT:  return a < b
-        elif token_type == PG_Type.LE:  return a <= b
-        elif token_type == PG_Type.GT:  return a > b
-        elif token_type == PG_Type.GE:  return a >= b
+        if   token_type is PGT.EQ:  return a == b
+        elif token_type is PGT.LT:  return a < b
+        elif token_type is PGT.LE:  return a <= b
+        elif token_type is PGT.GT:  return a > b
+        elif token_type is PGT.GE:  return a >= b
 
 if __name__ == "__main__":
     code = """
@@ -625,8 +635,7 @@ if __name__ == "__main__":
             print("outer a: ", outA);
         }
         outer(15);
-    """
-    code = """
+    
     Class FooClass {
         class_attr_a = 5;
         class_attr_b; 
