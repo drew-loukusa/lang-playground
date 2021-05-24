@@ -563,10 +563,12 @@ if __name__ == "__main__":
             print("outer a: ", outA);
         }
         outer(15);
-    
+    """
+    code = """
     Class FooClass {
         class_attr_a = 5;
         class_attr_b; 
+        bar = 1;
 
         def FooClass(){
             print("Empty constructor!");
@@ -590,6 +592,11 @@ if __name__ == "__main__":
         def another_normal_class_method_with_params(a, b, c){
             print("I have 3 params, a, b, c");
         }
+
+        def func_with_shadowing_param(bar){
+            bar = 12;
+            print("Set shadowing func param to: ", bar);
+        }
     }
     instance_foo = FooClass(10);
     instance_foo = FooClass();
@@ -597,7 +604,9 @@ if __name__ == "__main__":
     print("Accessing class attr outside the class: ", instance_foo.class_attr_a);
     instance_foo.class_attr_a = 10;
     print("After changing it: ", instance_foo.class_attr_a);
-    
+    print("instance_foo.bar: ", instance_foo.bar);
+    instance_foo.func_with_shadowing_param(5);
+    print("instance_foo.bar: ", instance_foo.bar);
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
