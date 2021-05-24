@@ -14,7 +14,7 @@ class PG_Function:
         self.code = code  
 
     def __repr__(self):
-        return f"<Function: {self.name}, params: {self.params} >"
+        return f"<Function: {self.name}, params: {self.params}>"
 
 class PG_Class(PG_Scope):
     def __init__(self, name: str, is_class_def=False):
@@ -24,4 +24,4 @@ class PG_Class(PG_Scope):
         self.methods = defaultdict(dict)
     
     def __repr__(self):
-        return f"< Class: {self.name}, attrs: {self.attrs} methods: {self.methods} >"
+        return f"<Class: {self.name}, attrs: {self.attrs} methods: {self.methods}>"

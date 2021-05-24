@@ -7,7 +7,7 @@ class AbstractScope:
         self.children: list[Scope, ...] = []
     
     def __repr__(self):
-        return f"< Scope: {self.name}, depth: {self.depth}, parent: {self.parent.name}, num_children {len(self.children)}"
+        return f"<Scope: {self.name}, depth: {self.depth}, parent: {self.parent.name}, num_children {len(self.children)}>"
 
     def resolve(self, symbol: str):
         """ 

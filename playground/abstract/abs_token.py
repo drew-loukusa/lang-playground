@@ -9,4 +9,4 @@ class AbstractToken:
         self.text = token_text
     
     def __repr__(self):
-        return "<" + str(self.type) + " '" + str(self.text) + "'>"
+        return f"<{self.type}: '{self.text}'>"
