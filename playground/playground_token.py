@@ -14,6 +14,7 @@ class PG_Type(Enum):
     MINUS = auto()
     STAR = auto()
     FSLASH = auto()
+    PERCENT = auto()
     INT = auto()
     FLOAT = auto()
     STRING = auto()

@@ -1,4 +1,4 @@
-from playground_token import PG_Type, PG_Token
+from playground_token import PG_Type as PGT, PG_Token
 from abstract.abs_lexer import AbstractLexer
 
 
@@ -7,17 +7,17 @@ class PlaygroundLexer(AbstractLexer):
         super().__init__(input_str)
 
         self.reserved_names = {
-            "def": PG_Type.DEF,
-            "print": PG_Type.PRINT,
-            "True": PG_Type.TRUE,
-            "False": PG_Type.FALSE,
-            "and": PG_Type.AND,
-            "or": PG_Type.OR,
-            "if": PG_Type.IF,
-            "elif": PG_Type.ELIF,
-            "else": PG_Type.ELSE,
-            "while": PG_Type.WHILE,
-            "Class": PG_Type.CLASS,
+            "def": PGT.DEF,
+            "print": PGT.PRINT,
+            "True": PGT.TRUE,
+            "False": PGT.FALSE,
+            "and": PGT.AND,
+            "or": PGT.OR,
+            "if": PGT.IF,
+            "elif": PGT.ELIF,
+            "else": PGT.ELSE,
+            "while": PGT.WHILE,
+            "Class": PGT.CLASS,
         }
 
     def next_token(self) -> PG_Token:
@@ -37,64 +37,65 @@ class PlaygroundLexer(AbstractLexer):
                 continue
 
             elif self.c == ".":
-                return PG_Token(token_type=PG_Type.DOT, token_text=self.consume())
+                return PG_Token(token_type=PGT.DOT, token_text=self.consume())
 
             elif self.c == ";":
                 return PG_Token(
-                    token_type=PG_Type.SEMI_COLON, token_text=self.consume()
+                    token_type=PGT.SEMI_COLON, token_text=self.consume()
                 )
 
             elif self.c == ",":
-                return PG_Token(token_type=PG_Type.COMMA, token_text=self.consume())
+                return PG_Token(token_type=PGT.COMMA, token_text=self.consume())
 
             elif self.c == "=":
-                token_type = PG_Type.ASSIGN
+                token_type = PGT.ASSIGN
                 buf = self.consume()
 
                 if self.c == "=":
                     buf += self.consume()
-                    token_type = PG_Type.EQ
+                    token_type = PGT.EQ
 
                 return PG_Token(token_type=token_type, token_text=buf)
 
             elif self.c == ">":
-                token_type = PG_Type.GT
+                token_type = PGT.GT
                 buf = self.consume()
 
                 if self.c == "=":
                     buf += self.consume()
-                    token_type = PG_Type.GE
+                    token_type = PGT.GE
 
                 return PG_Token(token_type=token_type, token_text=buf)
 
             elif self.c == "<":
-                token_type = PG_Type.LT
+                token_type = PGT.LT
                 buf = self.consume()
 
                 if self.c == "=":
                     buf += self.consume()
-                    token_type = PG_Type.LE
+                    token_type = PGT.LE
 
                 return PG_Token(token_type=token_type, token_text=buf)
 
             elif self.c == "(":
-                return PG_Token(token_type=PG_Type.LPAREN, token_text=self.consume())
+                return PG_Token(token_type=PGT.LPAREN, token_text=self.consume())
 
             elif self.c == ")":
-                return PG_Token(token_type=PG_Type.RPAREN, token_text=self.consume())
+                return PG_Token(token_type=PGT.RPAREN, token_text=self.consume())
 
             elif self.c == "{":
-                return PG_Token(token_type=PG_Type.LCURBRACK, token_text=self.consume())
+                return PG_Token(token_type=PGT.LCURBRACK, token_text=self.consume())
 
             elif self.c == "}":
-                return PG_Token(token_type=PG_Type.RCURBRACK, token_text=self.consume())
+                return PG_Token(token_type=PGT.RCURBRACK, token_text=self.consume())
 
             elif self.c in ["+", "-"]:
-                token_type = PG_Type.PLUS if self.c == "+" else PG_Type.MINUS
+                token_type = PGT.PLUS if self.c == "+" else PGT.MINUS
                 return PG_Token(token_type=token_type, token_text=self.consume())
 
-            elif self.c in ["*", "/"]:
-                token_type = PG_Type.STAR if self.c == "*" else PG_Type.FSLASH
+            elif self.c in ["*", "/", "%"]:
+                mult_ops = {"*": PGT.STAR, "/": PGT.FSLASH, "%": PGT.PERCENT}
+                token_type = mult_ops[self.c]
                 return PG_Token(token_type=token_type, token_text=self.consume())
 
             elif self.c == '"':
@@ -109,7 +110,7 @@ class PlaygroundLexer(AbstractLexer):
             else:
                 raise Exception(f"Invalid character: {self.c}")
 
-        return PG_Token(token_type=PG_Type.EOF, token_text="<EOF>")
+        return PG_Token(token_type=PGT.EOF, token_text="<EOF>")
 
     def isDigit(self):
         return self.c >= "0" and self.c <= "9"
@@ -128,7 +129,7 @@ class PlaygroundLexer(AbstractLexer):
         # Discard the closing quote
         self.consume()
 
-        token_type = PG_Type.STRING
+        token_type = PGT.STRING
         return PG_Token(token_type=token_type, token_text=buf)
 
     def NAME(self):
@@ -136,20 +137,20 @@ class PlaygroundLexer(AbstractLexer):
         while self.isLetter() or self.c == "_":
             buf += self.consume()
 
-        token_type = PG_Type.NAME
+        token_type = PGT.NAME
         if buf in self.reserved_names:
             token_type = self.reserved_names[buf]
 
         return PG_Token(token_type=token_type, token_text=buf)
 
     def NUMBER(self):
-        token_type = PG_Type.INT  # Assume into start
+        token_type = PGT.INT  # Assume into start
         buf = self.consume()
         while self.isDigit():
             buf += self.consume()
 
         if self.c == ".":
-            token_type = PG_Type.FLOAT  # Change if float recognized
+            token_type = PGT.FLOAT  # Change if float recognized
             buf += self.consume()
             while self.isDigit():
                 buf += self.consume()
@@ -182,7 +183,7 @@ if __name__ == "__main__":
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
-    while token.type != PG_Type.EOF:
+    while token.type != PGT.EOF:
         print(token)
         token = lexer.next_token()
     print(token)

@@ -19,7 +19,7 @@ class PlaygroundInterpreter:
         self.root = None
         self.parser = None
 
-        self.operators = {PGT.PLUS, PGT.MINUS, PGT.STAR, PGT.FSLASH}
+        self.operators = {PGT.PLUS, PGT.MINUS, PGT.STAR, PGT.FSLASH, PGT.PERCENT}
 
         self.conditionals = {
             PGT.IF,
@@ -473,6 +473,7 @@ class PlaygroundInterpreter:
         elif token_type is PGT.MINUS:   return a - b
         elif token_type is PGT.STAR:    return a * b
         elif token_type is PGT.FSLASH:  return a / b
+        elif token_type is PGT.PERCENT: return a % b
 
     def _and(self, t: PG_AST):
         """
@@ -638,6 +639,7 @@ if __name__ == "__main__":
     print("instance_foo.bar: ", instance_foo.bar);
     instance_foo.func_with_shadowing_param(5);
     print("instance_foo.bar: ", instance_foo.bar);
+    print("5 % 3 == ", 5 % 3);
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

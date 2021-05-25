@@ -70,4 +70,4 @@ atom:   dotted_expr |
 
 cmp_op: ^ ( '==' |  '>=' |  '<=' |  '>' |  '<' )      ;
 add_op: ^ ( PLUS | MINUS );
-mult_op: ^ ( STAR | FSLASH );
+mult_op: ^ ( STAR | FSLASH | PERCENT );

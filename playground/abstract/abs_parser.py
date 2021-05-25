@@ -23,12 +23,14 @@ class AbstractParser:
 
     def LT(self, i):
         """
+        (L)ook Ahead (T)oken 
         Returns the i'th lookahead token
         """
         return self.lookahead[(self.p + i - 1) % self.k]  # Circular fetch
 
     def LA(self, i):
         """
+        "(L)ook (A)head" 
         Returns type of the i'th lookahead token
         """
         return self.LT(i).type
