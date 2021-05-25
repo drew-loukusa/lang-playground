@@ -14,6 +14,7 @@ statement: ^ ( print_stat
             | if_stat
             | while_stat 
             | func_def 
+            | return_stat
             | class_def )
             ; 
 
@@ -34,6 +35,7 @@ while_stat: ^ 'while' bool_expr block_stat ;
 
 func_def: 'def' NAME '(' id_list ')' block_stat -> ^( 'def' NAME id_list block_stat ) ;
 func_call: NAME '(' arg_list ')' ';' -> ^( NAME arg_list ) ; 
+return_stat: 'return' expr_stat ;
 
 class_def: ^ 'Class' NAME block_stat ;
 dotted_expr: NAME ^ '.' ( NAME | func_call ) ;

@@ -67,6 +67,7 @@ class PlaygroundParser(AbstractParser):
             PGT.WHILE,
             PGT.DEF,
             PGT.CLASS,
+            PGT.RETURN,
         }:
             root.add_child(self.statement())
         return root
@@ -83,6 +84,9 @@ class PlaygroundParser(AbstractParser):
 
         elif self.LA(1) == PGT.DEF:
             root = self.func_def()
+
+        elif self.LA(1) == PGT.RETURN:
+            root = self.return_stat()
 
         # Block statement
         elif self.LA(1) == PGT.LCURBRACK:
@@ -234,6 +238,13 @@ class PlaygroundParser(AbstractParser):
         self.match(PGT.LPAREN)
         root.add_child(self.arg_list())
         self.match(PGT.RPAREN)
+        return root
+
+    @_reraise_with_rule_name
+    def return_stat(self):
+        root = self.match(PGT.RETURN)
+        root.add_child(self.bool_expr())
+        self.match(PGT.SEMI_COLON)
         return root
 
     @_reraise_with_rule_name
@@ -518,6 +529,12 @@ if __name__ == "__main__":
                     goopy = 5;
                 }
                 a = 5 % 3;
+
+                def func_with_return_stat(arg_a){
+                    arg_a = arg_a + 1;
+                    print(arg_a);
+                    return arg_a;
+                }
                 """
                 
     AST = PlaygroundParser(input_str=input_str).program()

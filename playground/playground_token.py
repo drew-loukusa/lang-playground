@@ -36,6 +36,7 @@ class PG_Type(Enum):
     ELIF = auto()
     ELSE = auto()
     WHILE = auto()
+    RETURN = auto()
     INVALID_TOKEN_TYPE = 0
     EOF = -1
 

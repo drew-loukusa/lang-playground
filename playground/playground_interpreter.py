@@ -115,6 +115,9 @@ class PlaygroundInterpreter:
             elif token_type is PGT.DEF:
                 self._func_def(t)
 
+            elif token_type is PGT.RETURN:
+                return self._return(t)
+
             elif token_type is PGT.ASSIGN:
                 self._assign(t)
 
@@ -168,9 +171,11 @@ class PlaygroundInterpreter:
         Returns None
         """
         self._push_scope()
+        ret_val = None
         for statement in t.children:
-            self._exec(statement)
+            ret_val = self._exec(statement)
         self._pop_scope()
+        return ret_val
 
     def _print(self, t: PG_AST):
         """
@@ -249,9 +254,7 @@ class PlaygroundInterpreter:
         The function object holds the function name, function parameters,
         and function code (as a PG_AST sub-tree)
 
-        Returns None
-
-        FUTURE FEATURE: WILL OPTIONALY RETURN VALUES
+        May return a value or a class instance, by default returns None 
         """
         name = t.token.text
         args_list = []
@@ -303,8 +306,9 @@ class PlaygroundInterpreter:
             self.current_space.symbols[param] = arg
 
         # Don't try to "call" a constructor if none defined on class
+        ret_val = None 
         if not (class_instance != None and constructor is None and args_len == 0):
-            self._statements(func.code)
+            ret_val = self._statements(func.code)
 
         self._pop_scope()
 
@@ -314,6 +318,12 @@ class PlaygroundInterpreter:
 
         if class_instance != None:
             return class_instance
+
+        return ret_val
+
+    def _return(self, t: PG_AST):
+        expr = t.children[0]
+        return self._exec(expr)
 
     def _class_def(self, t: PG_AST):
         # Create PG_Class object
@@ -640,6 +650,14 @@ if __name__ == "__main__":
     instance_foo.func_with_shadowing_param(5);
     print("instance_foo.bar: ", instance_foo.bar);
     print("5 % 3 == ", 5 % 3);
+
+
+    def add(a, b){
+        return a + b;
+    }
+
+    print("Adding 5 and 10 via a func: ", add(5, 10));
+
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

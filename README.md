@@ -21,7 +21,7 @@ Current programing constructs that it supports:
 * Boolean expressions
 * Conditional statements (if, elif, else, while)
 * Nested scopes (block statements)
-* Functions
+* Functions (including returning values from funcs)
 * User defined data types, e.g. classes. Structs are also supported as they are a subset of classes
 
 Next on the list to be added:
