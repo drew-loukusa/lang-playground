@@ -27,4 +27,4 @@ class PG_Class(PG_Scope):
         self.methods = defaultdict(dict)
 
     def __repr__(self):
-        return f"<Class: {self.name}, attrs: {self.attrs} methods: {self.methods}>"
+        return f"<Class: {self.name}, attrs: {self.symbols} methods: {self.methods}>"

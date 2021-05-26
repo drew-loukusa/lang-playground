@@ -24,9 +24,10 @@ Current programing constructs that it supports:
 * Functions (including returning values from funcs)
 * User defined data types, e.g. classes. Structs are also supported as they are a subset of classes
 
-Next on the list to be added:
-* Improved strings (being able to escape chars, string subsitution etc)
+To-Add List:
+* An import system
 * Forward references
+* Improved strings (being able to escape chars, string subsitution etc)
 * Static methods for user classes
 
 Ideally, I would like to get this project to a point where I could start implementing features in _playground_ itself. I'm not sure how much I would actually do, but being able to _start_ using the lang itself to add to the lang would be pretty cool.

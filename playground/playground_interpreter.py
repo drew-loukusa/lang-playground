@@ -657,6 +657,10 @@ if __name__ == "__main__":
     }
 
     print("Adding 5 and 10 via a func: ", add(5, 10));
+    print(add);
+    alias_for_add = add;
+    print(alias_for_add);
+    print(alias_for_add(10, 52));
 
     """
     PI = PlaygroundInterpreter()
