@@ -164,20 +164,25 @@ class PlaygroundInterpreter:
 
         returns None
         """
-        self._statements(t)
+        self._statements(t, push_scope=False)
 
-    def _statements(self, t: PG_AST):
+    def _statements(self, t: PG_AST, push_scope=True):
         """
         Executes nested statements;
         This is what is called to handle "block" statements.
 
         Returns None
         """
-        self._push_scope()
+        if push_scope:
+            self._push_scope()
+
         ret_val = None
         for statement in t.children:
             ret_val = self._exec(statement)
-        self._pop_scope()
+        
+        if push_scope:
+            self._pop_scope()
+            
         return ret_val
 
     def _import(self, t: PG_AST):
@@ -187,8 +192,7 @@ class PlaygroundInterpreter:
 
         import_root = import_parser.program()
         if import_root != None:
-            for statement in import_root.children:
-                self._exec(statement)
+           self._program(import_root)
 
     def _print(self, t: PG_AST):
         """
@@ -283,8 +287,18 @@ class PlaygroundInterpreter:
         # Well, it IS a function call, but it's a special case of one, where we call a constructor
         # if it is defined
         obj = self._load(t)
-        if type(obj) == PG_Class:
-            return self._class_instantiation(t, args_list=args_list)
+        if type(obj) == PG_Class or (
+            self._get_enclosing_class().name == name 
+        ):
+            interior_call = (
+                type(obj) != PG_Class 
+                and self._get_enclosing_class().name == name
+            )
+            return self._class_instantiation(
+                t, 
+                args_list=args_list,
+                interior_call=interior_call
+            )
         
         # Maybe, check here, if enclosing scope is a class?
         # Then, use it's methods dict to get the func object
@@ -347,12 +361,21 @@ class PlaygroundInterpreter:
         # Place class object into current scope/symbol table
         self.current_space.symbols[name] = class_def
 
-    def _class_instantiation(self, t: PG_AST ,args_list):
+    def _class_instantiation(self, t: PG_AST ,args_list, interior_call=False):
         
-        class_def = self._load(t)
+        obj = self._load(t)
+        class_def = obj
+        args_len = len(args_list)
+
+        # Check if we are being called from inside the same class
+        # If so, _load() will resolve t to a constructor, when we 
+        # need the class def object, so get that instead 
+        if interior_call:
+            class_name = obj[args_len].name
+            class_def = self.globals.resolve(class_name)
+
         constructors = class_def.methods[class_def.name]
 
-        args_len = len(args_list)
         # Lookup in the class def, a function that shares the name of the
         # class, and has the same number of parameters as the called constructor
         # That will be the correct constructor to call.
