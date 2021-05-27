@@ -265,13 +265,16 @@ class PlaygroundInterpreter:
             self.current_space.symbols[name][len(params)] = new_func
         return new_func
 
+    def _py_str(self, obj):
+        return str(obj)
+
     def _func_call(self, t: PG_AST):
         """
         Executes a function call.
         Loads the previously created function object (which holds the definition
         for the function) and uses it to execute the function.
 
-        The function object holds the function name, function parameters,
+        The function object holds the function name, function parameters, 
         and function code (as a PG_AST sub-tree)
 
         May return a value or a class instance, by default returns None 
@@ -282,6 +285,11 @@ class PlaygroundInterpreter:
             for arg in t.children[0].children:
                 args_list.append(self._exec(arg))
         args_len = len(args_list)
+
+        if name == 'str':
+            if len(args_list) != 1:
+                raise TypeError("built in str() only takes 1 argument")
+            return self._py_str(args_list[0])
 
         # Because class instantiation looks like a function call, handle that here
         # Well, it IS a function call, but it's a special case of one, where we call a constructor
@@ -701,12 +709,12 @@ if __name__ == "__main__":
     import "C:\\src\\lang-playground\\playground\\test_module.plgd";
     k = Point(10, 10);
     f = Point(20, 5);
-    print("point k: ", k);
-    print("point f: ", f);
+    print("point k: ", k.to_str());
+    print("point f: ", f.to_str());
 
     k.Add(f);
     p = k.Add(f);
-    print("k + f = ", p);
+    print("k + f = ", p.to_str());
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
