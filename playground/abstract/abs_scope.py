@@ -3,8 +3,8 @@ class AbstractScope:
         self.name = name
         self.depth = 0
         self.symbols: dict = {}
-        self.parent: Scope = None
-        self.children: list[Scope, ...] = []
+        self.parent: AbstractScope = None
+        self.children: list[AbstractScope, ...] = []
 
     def __repr__(self):
         return f"<Scope: {self.name}, depth: {self.depth}, parent: {self.parent.name}, num_children {len(self.children)}>"

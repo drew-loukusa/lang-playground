@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from playground_ast import PG_AST
-from playground_token import PG_Type as PGT
+from playground_token import PG_Type as PGT, PG_Token
 from playground_parser import PlaygroundParser
 from playground_scope import PG_Scope, PG_Function, PG_Class
 
@@ -99,6 +99,9 @@ class PlaygroundInterpreter:
 
             if t.artificial == True and t.name == "$STATEMENTS":
                 self._statements(t)
+            
+            elif token_type is PGT.IMPORT:
+                self._import(t)
 
             elif token_type is PGT.CLASS:
                 self._class_def(t)
@@ -177,6 +180,16 @@ class PlaygroundInterpreter:
         self._pop_scope()
         return ret_val
 
+    def _import(self, t: PG_AST):
+        module_name = t.children[0].token.text
+        module_text = open(module_name, mode='r').read()
+        import_parser = PlaygroundParser(input_str=module_text)
+
+        import_root = import_parser.program()
+        if import_root != None:
+            for statement in import_root.children:
+                self._exec(statement)
+
     def _print(self, t: PG_AST):
         """
         Prints out the result of 't's only subtree using pythons built in print.
@@ -242,7 +255,10 @@ class PlaygroundInterpreter:
         code = t.children[2]
 
         new_func = PG_Function(name=name, params=params, code=code)
-        self.current_space.symbols[name] = new_func
+        if add_to_current_scope:
+            if name not in self.current_space.symbols:
+                self.current_space.symbols[name] = {}
+            self.current_space.symbols[name][len(params)] = new_func
         return new_func
 
     def _func_call(self, t: PG_AST):
@@ -424,6 +440,11 @@ class PlaygroundInterpreter:
 
         # Assign symbol it's new value
         symbol_scope.symbols[name] = value
+    
+    def _load_from_name(self, name):
+        token = PG_Token(token_type=PGT.NAME, token_text=name)
+        node = PG_AST(token=token)
+        return self._load(node)
 
     def _load(self, t: PG_AST, this=False):
         """
@@ -661,7 +682,17 @@ if __name__ == "__main__":
     alias_for_add = add;
     print(alias_for_add);
     print(alias_for_add(10, 52));
+    """
+    code = """
+    import "C:\\src\\lang-playground\\playground\\test_module.plgd";
+    k = Point(10, 10);
+    f = Point(20, 5);
+    print("point k: ", k);
+    print("point f: ", f);
 
+    k.Add(f);
+    p = k.Add(f);
+    print("k + f = ", p);
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

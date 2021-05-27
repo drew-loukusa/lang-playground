@@ -19,6 +19,7 @@ class PG_Type(Enum):
     FLOAT = auto()
     STRING = auto()
     DOT = auto()
+    IMPORT = auto()
     NAME = auto()
     DEF = auto()
     CLASS = auto()

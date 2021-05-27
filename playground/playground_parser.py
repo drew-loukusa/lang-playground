@@ -57,6 +57,7 @@ class PlaygroundParser(AbstractParser):
         while self.LA(1) in {
             PGT.LPAREN,
             PGT.NAME,
+            PGT.IMPORT,
             PGT.PRINT,
             PGT.INT,
             PGT.FLOAT,
@@ -76,7 +77,10 @@ class PlaygroundParser(AbstractParser):
     def statement(self):
         root = None
         # Parse built in print function
-        if self.LA(1) == PGT.PRINT:
+        if self.LA(1) == PGT.IMPORT:
+            root = self.pg_import()
+
+        elif self.LA(1) == PGT.PRINT:
             root = self.pg_print()
 
         elif self.LA(1) == PGT.CLASS:
@@ -116,6 +120,14 @@ class PlaygroundParser(AbstractParser):
             )
 
         return root
+
+    @_reraise_with_rule_name
+    def pg_import(self):
+        root = self.match(PGT.IMPORT)
+        path = self.match(PGT.STRING)
+        root.add_child(path)
+        self.match(PGT.SEMI_COLON)
+        return root 
 
     @_reraise_with_rule_name
     def pg_print(self):
@@ -535,6 +547,8 @@ if __name__ == "__main__":
                     print(arg_a);
                     return arg_a;
                 }
+
+                import "C:\\a-path\\more-path\\file";
                 """
                 
     AST = PlaygroundParser(input_str=input_str).program()

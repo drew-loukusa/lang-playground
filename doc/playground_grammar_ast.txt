@@ -7,26 +7,29 @@ program: ^ statements ;
 
 statements: ^ $STATEMENTS statement * ;
 
-statement: ^ ( print_stat 
-            | assign_stat 
-            | expr_stat  
-            | block_stat 
-            | if_stat
-            | while_stat 
-            | func_def 
-            | return_stat
-            | class_def )
-            ; 
+statement: ^ ( import_stat 
+        | print_stat 
+        | assign_stat 
+        | expr_stat  
+        | block_stat 
+        | if_stat
+        | while_stat 
+        | func_def 
+        | return_stat
+        | class_def )
+        ; 
 
-arg_list: bool_expr ? |
-          bool_expr ( ',' bool_expr )+ 
-          -> ^($ARG_LIST bool_expr * );
 
+import_stat: 'import' STRING ';'
 
 print_stat: 'print' '(' arg_list ? ')' ';'      -> ^( 'print' arg_list ? ) ;
 assign_stat: NAME ('.' NAME)? '=' bool_expr ';' -> ^( '=' (NAME | '.' NAME NAME) bool_expr ) ; 
 expr_stat:   bool_expr ';'                      -> ^( bool_expr ) ;
 block_stat:  '{' statements '}'                 -> ^( statements ) ; 
+
+arg_list: bool_expr ? |
+          bool_expr ( ',' bool_expr )+ 
+          -> ^($ARG_LIST bool_expr * );
 
 if_stat:    ^ 'if'   bool_expr block_stat elif_stat ? else_stat ? ;
 elif_stat:  ^ 'elif' bool_expr block_stat elif_stat * else_stat ? ;

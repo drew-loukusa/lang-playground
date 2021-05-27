@@ -19,6 +19,7 @@ class PlaygroundLexer(AbstractLexer):
             "while": PGT.WHILE,
             "Class": PGT.CLASS,
             "return": PGT.RETURN,
+            "import": PGT.IMPORT,
         }
 
     def next_token(self) -> PG_Token:
@@ -182,6 +183,7 @@ if __name__ == "__main__":
     _underscored_name
     _underscored_name_
     return
+    import
     """
     lexer = PlaygroundLexer(input_str)
     token = lexer.next_token()
