@@ -1,0 +1,19 @@
+Class Point {
+    x; y;
+
+    def Point(x, y){
+        this.x = x;
+        this.y = y;
+    }
+
+    def Add(a){
+        return Point(
+            x + a.x,  
+            y + a.y
+        );
+    }
+
+    def to_str(){
+        return "<Point: (" + str(x) + ", " + str(y) +")>";
+    }
+}

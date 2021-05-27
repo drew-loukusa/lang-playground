@@ -1,3 +1,5 @@
+import sys
+from os import path, getcwd
 from copy import deepcopy
 
 from playground_ast import PG_AST
@@ -186,8 +188,10 @@ class PlaygroundInterpreter:
         return ret_val
 
     def _import(self, t: PG_AST):
+        cwd = sys.path[0]
         module_name = t.children[0].token.text
-        module_text = open(module_name, mode='r').read()
+        cur_path = path.join(cwd, module_name)
+        module_text = open(cur_path, mode='r').read()
         import_parser = PlaygroundParser(input_str=module_text)
 
         import_root = import_parser.program()
@@ -706,7 +710,8 @@ if __name__ == "__main__":
     print(alias_for_add(10, 52));
     """
     code = """
-    import "C:\\src\\lang-playground\\playground\\test_module.plgd";
+    import "..\\examples\\ex_module_Point.plgd";
+
     k = Point(10, 10);
     f = Point(20, 5);
     print("point k: ", k.to_str());
