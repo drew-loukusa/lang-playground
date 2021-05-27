@@ -236,7 +236,7 @@ class PlaygroundInterpreter:
             self._pop_scope()
             return result
 
-    def _func_def(self, t: PG_AST):
+    def _func_def(self, t: PG_AST, add_to_current_scope=True):
         """
         Defines a function.
 
@@ -277,63 +277,34 @@ class PlaygroundInterpreter:
         if len(t.children) > 0:
             for arg in t.children[0].children:
                 args_list.append(self._exec(arg))
-
-        obj = self._load(t)
+        args_len = len(args_list)
 
         # Because class instantiation looks like a function call, handle that here
         # Well, it IS a function call, but it's a special case of one, where we call a constructor
         # if it is defined
+        obj = self._load(t)
+        if type(obj) == PG_Class:
+            return self._class_instantiation(t, args_list=args_list)
+        
+        # Maybe, check here, if enclosing scope is a class?
+        # Then, use it's methods dict to get the func object
+        # Yeah. Make sure to delete the comment in _load
 
-        # So, look up the instance, or create it if it does not yet exist.
-        # Retrieve the class instance and method, push class instance as scope, call method
+        func_dict = obj 
+        func = func_dict.get(args_len) 
 
-        class_instance, constructor = None, None
-        if type(obj) is PG_Class:
-            # If the retrieved object is the class definition object, then we are creating a new instance
-            if obj.is_class_def:
-                class_instance, constructor = self._class_instantiation(
-                    class_def=obj, args_list=args_list
-                )
-            else:
-                # If instance is NOT class def
-                pass
-
-        func = obj if constructor is None else constructor
-
-        args_len = len(args_list)
-        params_len = len(func.params)
-        if args_len < params_len:
+        if func is None:
             raise TypeError(
-                f"{name}() called, but {params_len - args_len} parameters were missing"
+                f"No function with name {name} and param length {args_len} found!"
             )
-
-        if args_len > params_len:
-            raise TypeError(
-                f"Function {name} called, but too many parameters were given"
-            )
-
-        # If calling a constructor, push the class as a scope first
-        if constructor != None and class_instance != None:
-            self._push_scope(name="", scope_to_use=class_instance)
 
         self._push_scope(name=f"func_scope_{name}")
 
         for param, arg in zip(func.params, args_list):
             self.current_space.symbols[param] = arg
 
-        # Don't try to "call" a constructor if none defined on class
-        ret_val = None 
-        if not (class_instance != None and constructor is None and args_len == 0):
-            ret_val = self._statements(func.code)
-
+        ret_val = self._statements(func.code)
         self._pop_scope()
-
-        # If a constructor was called, remove the class scope from the tree
-        if constructor != None and class_instance != None:
-            self._pop_scope()
-
-        if class_instance != None:
-            return class_instance
 
         return ret_val
 
@@ -362,36 +333,56 @@ class PlaygroundInterpreter:
             # Create func objects to put in methods
             elif stmnt_tk_type is PGT.DEF:
                 func_name = statement.children[0].token.text
-                class_method = self._func_def(statement)
+                class_method = self._func_def(
+                    statement,
+                    add_to_current_scope=False,
+                )
                 params_len = len(class_method.params)
-                class_def.methods[func_name][params_len] = class_method
+                if func_name not in class_def.symbols:
+                    class_def.symbols[func_name] = {}
+                class_def.symbols[func_name][params_len] = class_method
             else:
                 self._exec(statement)
 
         # Place class object into current scope/symbol table
         self.current_space.symbols[name] = class_def
 
-    def _class_instantiation(self, class_def: PG_Class, args_list):
+    def _class_instantiation(self, t: PG_AST ,args_list):
+        
+        class_def = self._load(t)
+        constructors = class_def.methods[class_def.name]
+
+        args_len = len(args_list)
         # Lookup in the class def, a function that shares the name of the
         # class, and has the same number of parameters as the called constructor
         # That will be the correct constructor to call.
+        constructor = constructors.get(args_len)
+
+        # Create a new copy of the class, and mark it as a copy of the definition
+        # aka, an instance of said class
         new_instance = deepcopy(class_def)
+        new_instance.is_class_def = False
 
-        # Based on the length of the args list, select the correct constructor
-        # If a constructor does not exist for the length, raise an exception
-        # However, if the length is zero, and there is no constructor that takes zero args,
-        # DO NOT raise an exception. Simply init any attrs that don't get assigned a value to None
-        args_len = len(args_list)
-        name = new_instance.name
-        constructor = None
-        constructors = new_instance.methods.get(name)
+        # If calling a constructor, push the new instance as a scope first
+        if constructor != None:
+            self._push_scope(
+                name=f"instance_of_{class_def.name}", 
+                scope_to_use=new_instance
+            )
 
-        # If there is at least one constructor defined, retrieve it
-        # but only if it has the correct number of params
-        if constructors != None:
-            constructor = constructors.get(args_len)
+        # Don't try to "call" a constructor if none defined on class
+        # or if no constructor was selected 
+        if len(constructors) > 0 and constructor != None:
+            for param, arg in zip(constructor.params, args_list):
+                self.current_space.symbols[param] = arg
 
-        return new_instance, constructor
+            self._statements(constructor.code)
+
+        # If a constructor was called, remove the class scope from the tree
+        if constructor != None:
+            self._pop_scope()
+
+        return new_instance
 
     def _assign(self, t: PG_AST):
         """
