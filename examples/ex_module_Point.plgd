@@ -1,9 +1,17 @@
 # An example class in Playground
 Class Point {
+
+    # Data members must be declared in the class body
+    # Assigning a value at initialization is optional.
+    
+    # Upon instance creation, any members that are 
+    # not given a value in the class body or in a constructor will be auto
+    # initialized to None (Python)
+
     x; y;
 
     # Multiple constructors are allowed,
-    # provide they have a different number of arguments
+    # provided they have a different number of parameters
     def Point(){
         x = 0;
         y = 0;
@@ -14,6 +22,13 @@ Class Point {
         this.y = y;
     }
 
+    # Same thing applies to functions
+    # Multiple functions can share the same name, provided they all have a 
+    # different number of parameters
+
+    # Between any functions that share a name and number of parameters, the
+    # function that is defined the latest will override the earlier defined
+    # functions.
     def Add(a){
         return Point(
             x + a.x,  
@@ -21,6 +36,9 @@ Class Point {
         );
     }
 
+    # str() directly maps to Python's 'str()' function. 
+    # This is lazy design on my part, but it allows me to get a basic version of 
+    # User_class.toString() working, which is nice for print debugging.
     def to_str(){
         return "<Point: (" + str(x) + ", " + str(y) +")>";
     }

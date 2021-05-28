@@ -5,6 +5,8 @@ __pycache__/
 
 .vscode/
 
+TODO.txt
+
 # C extensions
 *.so
 

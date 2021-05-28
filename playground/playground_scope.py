@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from playground_ast import PG_AST
 from abstract.abs_scope import AbstractScope
 
