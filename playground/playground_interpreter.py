@@ -299,8 +299,10 @@ class PlaygroundInterpreter:
         # Well, it IS a function call, but it's a special case of one, where we call a constructor
         # if it is defined
         obj = self._load(t)
+        enclosing_class = self._get_enclosing_class()
         if type(obj) == PG_Class or (
-            self._get_enclosing_class().name == name 
+            enclosing_class != None 
+            and enclosing_class.name == name 
         ):
             interior_call = (
                 type(obj) != PG_Class 
@@ -710,6 +712,10 @@ if __name__ == "__main__":
     print(alias_for_add(10, 52));
     """
     code = """
+    def foo(){
+        print("foo called");
+    }
+    foo();
     import "..\\examples\\ex_module_Point.plgd";
 
     k = Point(10, 10);
