@@ -304,10 +304,22 @@ class PlaygroundInterpreter:
             enclosing_class != None 
             and enclosing_class.name == name 
         ):
+            # Check if a constructor is being called from inside a class:
+            # The type of obj will be a dict if this is an interior 
+            # constructor call. This is beacuse:
+
+            # A class scope has in it, the constructors which share their
+            # name with the class:
+            # Constructor Point(x,y) lives inside class Point
+
+            # Thus, if an enclosing scope is an class scope, the 
+            # constructor func name will resolve to a dict of funcs 
+            # instead of the class definition object.
             interior_call = (
-                type(obj) != PG_Class 
-                and self._get_enclosing_class().name == name
+                type(obj) != PG_Class       
+                and enclosing_class.name == name
             )
+
             return self._class_instantiation(
                 t, 
                 args_list=args_list,
