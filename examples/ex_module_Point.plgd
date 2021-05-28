@@ -1,5 +1,13 @@
+# An example class in Playground
 Class Point {
     x; y;
+
+    # Multiple constructors are allowed,
+    # provide they have a different number of arguments
+    def Point(){
+        x = 0;
+        y = 0;
+    }
 
     def Point(x, y){
         this.x = x;
