@@ -7,11 +7,16 @@ from playground_interpreter import PlaygroundInterpreter
 
 
 def run_stdout_test(capfd, in_str, ans_str):
+    in_str = in_str.strip()
+    ans_str = ans_str.strip()
     pgp = PlaygroundInterpreter()
     pgp.interp(input_str=in_str)
     out, err = capfd.readouterr()
-    assert out.rstrip() == ans_str
-
+    if '\n' not in ans_str:
+        assert out.strip() == ans_str.strip()
+    else:
+        for a,b in zip(out.split('\n'), ans_str.split('\n')):
+            assert a.strip() == b.strip()
 
 # Test math operations
 def test_add_1(capfd):
@@ -225,3 +230,49 @@ def test_func_6(capfd):
     with pytest.raises(NameError):
         pgp = PlaygroundInterpreter()
         pgp.interp(input_str=in_str)
+
+# Class Testing
+def test_class_1(capfd):
+    in_str = """import "..\\examples\\ex_module_Point.plgd";
+    k = Point(10, 10);
+    f = Point(20, 5);
+    p = k.Add(f);
+    print(p.to_str());"""
+    ans_str = "<Point: (30, 15)>"
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_class_2(capfd):
+    in_str = """
+    import "..\\examples\\ex_module_foo_class.plgd";
+    instance_foo = FooClass(10);
+    instance_foo = FooClass();
+    instance_foo.NotAConstructor();
+    print("Accessing class attr outside the class: ", instance_foo.class_attr_a);
+    instance_foo.class_attr_a = 10;
+    print("After changing it: ", instance_foo.class_attr_a);
+    print("instance_foo.bar: ", instance_foo.bar);
+    instance_foo.func_with_shadowing_param(5);
+    print("instance_foo.bar: ", instance_foo.bar);
+    print("5 % 3 == ", 5 % 3);
+    """
+    
+    ans_str = """
+    Constructor called! I have one arg!
+    Assign a to 'class_attr_a' !
+    class_attr_a before: 5
+    class_attr_a: 10
+    Empty constructor!
+    class_attr_b: None
+    class_attr_a: 5
+    I don't have any params, and I'm not a constructor     
+    here's class_attr_a: 5
+    Accessing class attr outside the class: 5
+    After changing it: 10
+    instance_foo.bar: 1
+    shadowing func param bar is: 12
+    Printing shadowed class attr using keyword 'this': 1   
+    Set shadowed class attr bar to 15
+    instance_foo.bar: 15
+    5 % 3 == 2
+    """
+    run_stdout_test(capfd, in_str, ans_str)

@@ -1,6 +1,6 @@
-import sys
 from os import path
 from copy import deepcopy
+from sys import path as sys_path
 
 from playground_ast import PG_AST
 from playground_token import PG_Type as PGT, PG_Token
@@ -188,7 +188,7 @@ class PlaygroundInterpreter:
         return ret_val
 
     def _import(self, t: PG_AST):
-        cwd = sys.path[0]
+        cwd = sys_path[0]
         module_name = t.children[0].token.text
         cur_path = path.join(cwd, module_name)
         module_text = open(cur_path, mode='r').read()
@@ -611,103 +611,68 @@ class PlaygroundInterpreter:
 
 if __name__ == "__main__":
     code = """
-        print(10 < True);
-        if(True and True){print(True);}
-        if(True or True){print(True);}
-        if(False or True){print(True);}
-        if(True){print(True);} 
-        print((True and True));
-        a = 5;b = 5; print(a + b);
+    print(10 < True);
+    if(True and True){print(True);}
+    if(True or True){print(True);}
+    if(False or True){print(True);}
+    if(True){print(True);} 
+    print((True and True));
+    a = 5;b = 5; print(a + b);
 
-        print(5 - 2); print(5 * 2); print(5 / 2);
+    print(5 - 2); print(5 * 2); print(5 / 2);
 
-        a = 5 / 2; print(a + 3); foo = 3 * 5;
-        print(foo + (a * (3  -  4)));
-        print(3 - 4); print(2.4 + 1.3);
+    a = 5 / 2; print(a + 3); foo = 3 * 5;
+    print(foo + (a * (3  -  4)));
+    print(3 - 4); print(2.4 + 1.3);
 
-        a = 2; b = 3; c = 2;
-        { c = 1; print(c); } print(c);
+    a = 2; b = 3; c = 2;
+    { c = 1; print(c); } print(c);
 
-        if (5 < 6){ print("5 is less than 6"); }
-        elif (6 > 3){ print("6 is greater than 3"); }
-        print("Printing 10 through 1 in decreasing order");
-        a = 10;
-        while (a > 0) { print(a); a = a - 1; }
-        print("A test string");
+    if (5 < 6){ print("5 is less than 6"); }
+    elif (6 > 3){ print("6 is greater than 3"); }
+    print("Printing 10 through 1 in decreasing order");
+    a = 10;
+    while (a > 0) { print(a); a = a - 1; }
+    print("A test string");
 
-        a = "String stored in a"; print(a);
+    a = "String stored in a"; print(a);
 
-        a = 5; b = 3; c = 2;
-        print("a: ", a, ", b: ", b, ", c: ", c);
+    a = 5; b = 3; c = 2;
+    print("a: ", a, ", b: ", b, ", c: ", c);
 
-        def goobar(a, b, c){
-            print("func goobar called!");
-            print(a);
-            print(b + c);
+    def goobar(a, b, c){
+        print("func goobar called!");
+        print(a);
+        print(b + c);
+    }
+    goobar(1, 2, 3);
+    def foo(d, e, f){
+        print("func foo called!");
+        print("d: ", d);
+        print("e: ", e);
+        print("f: ", f);
+    }
+    foo(1, 2, 3);
+
+    def noParams(){
+        print("func noParams called!");
+        print("This func has no params");
+    }
+    noParams();
+
+    foo(5, 6, 7); { foo(3, 1, 2); }
+
+    def outer(outA){
+        def inner(inA){
+            print("Inner a: ", inA);
         }
-        goobar(1, 2, 3);
-        def foo(d, e, f){
-            print("func foo called!");
-            print("d: ", d);
-            print("e: ", e);
-            print("f: ", f);
-        }
-        foo(1, 2, 3);
-
-        def noParams(){
-            print("func noParams called!");
-            print("This func has no params");
-        }
-        noParams();
-
-        foo(5, 6, 7); { foo(3, 1, 2); }
-
-        def outer(outA){
-            def inner(inA){
-                print("Inner a: ", inA);
-            }
-            inner(10);
-            print("outer a: ", outA);
-        }
-        outer(15);
+        inner(10);
+        print("outer a: ", outA);
+    }
+    outer(15);
     """
     code = """
-    Class FooClass {
-        class_attr_a = 5;
-        class_attr_b; 
-        bar = 1;
-
-        def FooClass(){
-            print("Empty constructor!");
-            print("class_attr_b: ", class_attr_b);
-            print("class_attr_a: ", class_attr_a);
-        }
-
-        def FooClass(a){
-            print("Constructor called! I have one arg!");
-            print("Assign a to 'class_attr_a' !");
-            print("class_attr_a before: ", class_attr_a);
-            class_attr_a = a;
-            print("class_attr_a: ", class_attr_a);
-        }
-
-        def NotAConstructor(){
-            print("I don't have any params, and I'm not a constructor");
-            print("here's class_attr_a: ", class_attr_a);
-        }
-
-        def another_normal_class_method_with_params(a, b, c){
-            print("I have 3 params, a, b, c");
-        }
-
-        def func_with_shadowing_param(bar){
-            bar = 12;
-            print("shadowing func param bar is: ", bar);
-            print("Printing shadowed class attr using keyword 'this': ", this.bar);
-            print("Set shadowed class attr bar to 15");
-            this.bar = 15;
-        }
-    }
+    import "..\\examples\\ex_module_foo_class.plgd";
     instance_foo = FooClass(10);
     instance_foo = FooClass();
     instance_foo.NotAConstructor();
@@ -718,43 +683,43 @@ if __name__ == "__main__":
     instance_foo.func_with_shadowing_param(5);
     print("instance_foo.bar: ", instance_foo.bar);
     print("5 % 3 == ", 5 % 3);
-
-
-    def add(a, b){
-        return a + b;
-    }
-
-    print("Adding 5 and 10 via a func: ", add(5, 10));
-    print(add);
-    alias_for_add = add;
-    print(alias_for_add);
-    print(alias_for_add(10, 52));
     """
-    code = """
-    def foo(){
-        print("foo called");
-    }
-    foo();
-    import "..\\examples\\ex_module_Point.plgd";
+    # code = """
+    # def add(a, b){
+    #     return a + b;
+    # }
 
-    k = Point(10, 10);
-    f = Point(20, 5);
-    print("point k: ", k.to_str());
-    print("point f: ", f.to_str());
+    # print("Adding 5 and 10 via a func: ", add(5, 10));
+    # print(add);
+    # alias_for_add = add;
+    # print(alias_for_add);
+    # print(alias_for_add(10, 52));
+    #"""
+    # code = """
+    # def foo(){
+    #     print("foo called");
+    # }
+    # foo();
+    # import "..\\examples\\ex_module_Point.plgd";
 
-    k.Add(f);
-    p = k.Add(f);
-    print("k + f = ", p.to_str());
+    # k = Point(10, 10);
+    # f = Point(20, 5);
+    # print("point k: ", k.to_str());
+    # print("point f: ", f.to_str());
 
-    a = 5; b = 10;
-    if (
-        (a < b and b == 10)
-        or (a > b and a == 11)
-    )
-    {
-            print("stuff");
-    }
-    print(k.attrs);
-    """
+    # k.Add(f);
+    # p = k.Add(f);
+    # print("k + f = ", p.to_str());
+
+    # a = 5; b = 10;
+    # if (
+    #     (a < b and b == 10)
+    #     or (a > b and a == 11)
+    # )
+    # {
+    #         print("stuff");
+    # }
+    # print(k.attrs);
+    # """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

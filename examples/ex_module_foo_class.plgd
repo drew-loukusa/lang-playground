@@ -1,0 +1,36 @@
+Class FooClass {
+    class_attr_a = 5;
+    class_attr_b; 
+    bar = 1;
+
+    def FooClass(){
+        print("Empty constructor!");
+        print("class_attr_b: ", class_attr_b);
+        print("class_attr_a: ", class_attr_a);
+    }
+
+    def FooClass(a){
+        print("Constructor called! I have one arg!");
+        print("Assign a to 'class_attr_a' !");
+        print("class_attr_a before: ", class_attr_a);
+        class_attr_a = a;
+        print("class_attr_a: ", class_attr_a);
+    }
+
+    def NotAConstructor(){
+        print("I don't have any params, and I'm not a constructor");
+        print("here's class_attr_a: ", class_attr_a);
+    }
+
+    def another_normal_class_method_with_params(a, b, c){
+        print("I have 3 params, a, b, c");
+    }
+
+    def func_with_shadowing_param(bar){
+        bar = 12;
+        print("shadowing func param bar is: ", bar);
+        print("Printing shadowed class attr using keyword 'this': ", this.bar);
+        print("Set shadowed class attr bar to 15");
+        this.bar = 15;
+    }
+}
