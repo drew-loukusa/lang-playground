@@ -15,7 +15,8 @@ I would _maybe_ like to change this in the future, but right now this is necessa
 
 If I was to switch to a different language, like C or Java, I would have to put in a considerable amount of more work into my backend.
 
-Current programing constructs that it supports:
+Programming Constructs Currently Supported in Playground
+* importing code from other modules (.plgd files)
 * Data types: Int, Float, Bools, Strings
 * Addition, subtraction, multiplication, division on said basic data types 
 * Boolean expressions
@@ -25,7 +26,6 @@ Current programing constructs that it supports:
 * User defined data types, e.g. classes. Structs are also supported as they are a subset of classes
 
 To-Add List:
-* An import system
 * Forward references
 * Improved strings (being able to escape chars, string subsitution etc)
 * Static methods for user classes
