@@ -234,6 +234,13 @@ class PlaygroundInterpreter:
 
         # Dotted field access
         elif rhs_tk_type is PGT.NAME:
+            
+            if rhs.token.text == 'attrs':
+                return instance.attrs
+            
+            elif rhs.token.text == 'methods':
+                return instance.methods
+
             self._push_scope(name="", scope_to_use=instance)
             result = None 
             if instance != None:
@@ -738,6 +745,16 @@ if __name__ == "__main__":
     k.Add(f);
     p = k.Add(f);
     print("k + f = ", p.to_str());
+
+    a = 5; b = 10;
+    if (
+        (a < b and b == 10)
+        or (a > b and a == 11)
+    )
+    {
+            print("stuff");
+    }
+    print(k.attrs);
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
