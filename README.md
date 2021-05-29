@@ -1,5 +1,5 @@
 This project is a small programming language made by me, to explore the patterns and topics found in this book: [Language Implementation Patterns:
-Create Your Own Domain-Specific and General Programming Languages"
+Create Your Own Domain-Specific and General Programming Languages,
 by Terence Parr](https://pragprog.com/titles/tpdsl/language-implementation-patterns/). 
 
 All implementation is done in Python. Python is not the best choice for implementing a programming language, but again my primary motivation behind doing this project was to explore the patterns in the book; So I decided to go with a lang that's fast to work with. 
