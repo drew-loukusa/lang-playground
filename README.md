@@ -1,4 +1,4 @@
-This project is a small programming language made by me, to explore the patterns and topics found in this book: "[Language Implementation Patterns:
+This project is a small programming language made by me, to explore the patterns and topics found in this book: [Language Implementation Patterns:
 Create Your Own Domain-Specific and General Programming Languages"
 by Terence Parr](https://pragprog.com/titles/tpdsl/language-implementation-patterns/). 
 
