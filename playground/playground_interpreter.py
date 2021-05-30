@@ -271,9 +271,15 @@ class PlaygroundInterpreter:
 
         new_func = PG_Function(name=name, params=params, code=code)
         if add_to_current_scope:
-            if name not in self.current_space.symbols:
-                self.current_space.symbols[name] = {}
-            self.current_space.symbols[name][len(params)] = new_func
+            cur_space = self.current_space.symbols
+            if name not in cur_space or (
+                # Check if the current NAME is used to reference another data
+                # type, e.g. Int or bool. If yes, reassign it an empty dict
+                name in cur_space 
+                and type(cur_space[name]) != dict
+            ):
+                cur_space[name] = {}
+            cur_space[name][len(params)] = new_func
         return new_func
 
     def _py_str(self, obj):
@@ -610,6 +616,7 @@ class PlaygroundInterpreter:
         elif token_type is PGT.GE:  return a >= b
 
 if __name__ == "__main__":
+    
     code = """
     print(10 < True);
     if(True and True){print(True);}
@@ -617,12 +624,15 @@ if __name__ == "__main__":
     if(False or True){print(True);}
     if(True){print(True);} 
     print((True and True));
-    a = 5;b = 5; print(a + b);
+    a = 5; b = 5; print(a + b);
 
     print(5 - 2); print(5 * 2); print(5 / 2);
 
-    a = 5 / 2; print(a + 3); foo = 3 * 5;
+    a = 5 / 2; 
+    print(a + 3); 
+    foo = 3 * 5;
     print(foo + (a * (3  -  4)));
+    
     print(3 - 4); print(2.4 + 1.3);
 
     a = 2; b = 3; c = 2;
@@ -635,11 +645,10 @@ if __name__ == "__main__":
     while (a > 0) { print(a); a = a - 1; }
     print("A test string");
 
-    a = "String stored in a"; print(a);
 
+    a = "String stored in a"; print(a);
     a = 5; b = 3; c = 2;
     print("a: ", a, ", b: ", b, ", c: ", c);
-
     def goobar(a, b, c){
         print("func goobar called!");
         print(a);
@@ -670,8 +679,7 @@ if __name__ == "__main__":
         print("outer a: ", outA);
     }
     outer(15);
-    """
-    code = """
+    
     import "..\\examples\\ex_module_foo_class.plgd";
     instance_foo = FooClass(10);
     instance_foo = FooClass();
@@ -683,43 +691,41 @@ if __name__ == "__main__":
     instance_foo.func_with_shadowing_param(5);
     print("instance_foo.bar: ", instance_foo.bar);
     print("5 % 3 == ", 5 % 3);
+   
+    def add(a, b){
+        return a + b;
+    }
+
+    print("Adding 5 and 10 via a func: ", add(5, 10));
+    print(add);
+    alias_for_add = add;
+    print(alias_for_add);
+    print(alias_for_add(10, 52));
+    
+    def foo(){
+        print("foo called");
+    }
+    foo();
+    import "..\\examples\\ex_module_Point.plgd";
+
+    k = Point(10, 10);
+    f = Point(20, 5);
+    print("point k: ", k.to_str());
+    print("point f: ", f.to_str());
+
+    k.Add(f);
+    p = k.Add(f);
+    print("k + f = ", p.to_str());
+
+    a = 5; b = 10;
+    if (
+        (a < b and b == 10)
+        or (a > b and a == 11)
+    )
+    {
+            print("stuff");
+    }
+    print(k.attrs);
     """
-    # code = """
-    # def add(a, b){
-    #     return a + b;
-    # }
-
-    # print("Adding 5 and 10 via a func: ", add(5, 10));
-    # print(add);
-    # alias_for_add = add;
-    # print(alias_for_add);
-    # print(alias_for_add(10, 52));
-    #"""
-    # code = """
-    # def foo(){
-    #     print("foo called");
-    # }
-    # foo();
-    # import "..\\examples\\ex_module_Point.plgd";
-
-    # k = Point(10, 10);
-    # f = Point(20, 5);
-    # print("point k: ", k.to_str());
-    # print("point f: ", f.to_str());
-
-    # k.Add(f);
-    # p = k.Add(f);
-    # print("k + f = ", p.to_str());
-
-    # a = 5; b = 10;
-    # if (
-    #     (a < b and b == 10)
-    #     or (a > b and a == 11)
-    # )
-    # {
-    #         print("stuff");
-    # }
-    # print(k.attrs);
-    # """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)
