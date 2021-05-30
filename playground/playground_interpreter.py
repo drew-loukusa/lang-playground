@@ -225,6 +225,12 @@ class PlaygroundInterpreter:
 
         rhs_tk_type = rhs.token.type
         rhs_child_len = len(rhs.children)
+
+        # Chained dotted expressions
+        if rhs_tk_type is PGT.DOT:
+            #print("CHAINED DOT EXPR")
+            return self._dotted_expr(rhs)
+
         # Dotted function call
         if self.is_function_call(rhs):
             self._push_scope(name="", scope_to_use=instance)
@@ -401,29 +407,37 @@ class PlaygroundInterpreter:
         self.current_space.symbols[name] = class_def
 
     def _class_instantiation(self, t: PG_AST ,args_list, interior_call=False):
-        
         obj = self._load(t)
         class_def = obj
         args_len = len(args_list)
 
+        
         # Check if we are being called from inside the same class
-        # If so, _load() will resolve t to a constructor, when we 
+        # If so, _load() can resolve t to a constructor, when we 
         # need the class def object, so get that instead 
         if interior_call:
             class_name = obj[args_len].name
             class_def = self.globals.resolve(class_name)
-
-        constructors = class_def.methods[class_def.name]
+            
+        # Create a new copy of the class, and mark it as a copy of the definition
+        # aka, an instance of said class
+        new_instance = deepcopy(class_def)
+        new_instance.is_class_def = False
+        
+        # Check that there is at least one constructor defined on the class
+        constructors = (
+            None if class_def.name not in class_def.methods 
+            else class_def.methods[class_def.name]
+        )
+        
+        # If there are no constructors, just return the new instance 
+        if constructors is None:
+            return new_instance
 
         # Lookup in the class def, a function that shares the name of the
         # class, and has the same number of parameters as the called constructor
         # That will be the correct constructor to call.
         constructor = constructors.get(args_len)
-
-        # Create a new copy of the class, and mark it as a copy of the definition
-        # aka, an instance of said class
-        new_instance = deepcopy(class_def)
-        new_instance.is_class_def = False
 
         # If calling a constructor, push the new instance as a scope first
         if constructor != None:
@@ -432,8 +446,7 @@ class PlaygroundInterpreter:
                 scope_to_use=new_instance
             )
 
-        # Don't try to "call" a constructor if none defined on class
-        # or if no constructor was selected 
+        # Don't try to call a constructor if no constructor was selected 
         if len(constructors) > 0 and constructor != None:
             for param, arg in zip(constructor.params, args_list):
                 self.current_space.symbols[param] = arg
@@ -726,6 +739,29 @@ if __name__ == "__main__":
             print("stuff");
     }
     print(k.attrs);
+
+    Class Outer {
+        a = 0;
+        b = 1;
+        
+        Class Inner {
+            ai = 234;
+            bi = 0;
+
+            def Inner(ai, bi){
+                this.ai = ai;
+                this.bi = bi;
+            }
+        }
+    }
+    print(Outer.Inner.ai);    
+    out_in = Outer.Inner(500, 99);
+    print(out_in);
+
+    out = Outer();
+    in = out.Inner(7, 8);
+    print(out);
+    print(in);
     """
     PI = PlaygroundInterpreter()
     PI.interp(input_str=code)

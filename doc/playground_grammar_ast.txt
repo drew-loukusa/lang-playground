@@ -41,7 +41,7 @@ func_call: NAME '(' arg_list ')' ';' -> ^( NAME arg_list ) ;
 return_stat: 'return' expr_stat ;
 
 class_def: ^ 'Class' NAME block_stat ;
-dotted_expr: NAME ^ '.' ( NAME | func_call ) ;
+dotted_expr: NAME ^ '.' ( NAME | func_call | dotted_expr ) ;
 
 id_list:  NAME ? |
           NAME ( ',' NAME )+ 

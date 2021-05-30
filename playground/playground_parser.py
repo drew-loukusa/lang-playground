@@ -274,7 +274,10 @@ class PlaygroundParser(AbstractParser):
         RHS = None
         if self.LA(2) == PGT.LPAREN:
             RHS = self.func_call()
-        else:
+        # Parse chained dotted expressions 
+        elif self.LA(1) == PGT.NAME and self.LA(2) == PGT.DOT:
+            RHS = self.dotted_expr()
+        elif self.LA(1) == PGT.NAME:
             RHS = self.match(PGT.NAME)
 
         root.add_children(LHS, RHS)
@@ -463,93 +466,102 @@ class PlaygroundParser(AbstractParser):
 if __name__ == "__main__":
     # Sanity check, parser should parse all of this and raise no exceptions.
     input_str = """
-                
-                print("A test string");
-                a = "String stored in a";
-                print(a);
-                if(True){
-                    print(True);
-                }
-                5 + 5;
-                10 + 10;
-                5 - 5;
-                5 * 5;
-                5 / 5; 
-                5 + 5 * 5;
-                5 * 5 + 5;
-                a * a - a;
-                foo + foo * bar;
-                (5 + 5) * foo;
-                goo = 5;
-                goo = bar;
-                goo = 5 + 5;
-                goo = (5 + 5);
-                goo = (5 + 5) * 5;
-                print(5);
-                print(goo);
-                print(5 + 5);
-                print(a + a); 
-                print(5 * (3 + 2));
-                print(5.0 + 2.3);
-                { a + b; }                
-                {
-                    {
-                        print(a + b);
-                    }
-                }
-                (5 - 3) >= 2 + 5;
-                5 > 6;
-                ((5 + 3) > 2 and True) or (10 <= (2 * 20) and 3 < 2);
-                if (5 > 6) { a + b; }
-                if (5 > 6) { print(a+b); } elif (5 <= 6 ) { print(b); } else { print(a); }
-                while (a > 0) { print(a); a = a - 1; }
-                if True { a; } elif False { b; } elif True { a; } else { b; }
-                if True { a; } else { b; }
-                if False { b; } else { print(a); }
+    print("A test string");
+    a = "String stored in a";
+    print(a);
+    if(True){
+        print(True);
+    }
+    5 + 5;
+    10 + 10;
+    5 - 5;
+    5 * 5;
+    5 / 5; 
+    5 + 5 * 5;
+    5 * 5 + 5;
+    a * a - a;
+    foo + foo * bar;
+    (5 + 5) * foo;
+    goo = 5;
+    goo = bar;
+    goo = 5 + 5;
+    goo = (5 + 5);
+    goo = (5 + 5) * 5;
+    print(5);
+    print(goo);
+    print(5 + 5);
+    print(a + a); 
+    print(5 * (3 + 2));
+    print(5.0 + 2.3);
+    { a + b; }                
+    {
+        {
+            print(a + b);
+        }
+    }
+    (5 - 3) >= 2 + 5;
+    5 > 6;
+    ((5 + 3) > 2 and True) or (10 <= (2 * 20) and 3 < 2);
+    if (5 > 6) { a + b; }
+    if (5 > 6) { print(a+b); } elif (5 <= 6 ) { print(b); } else { print(a); }
+    while (a > 0) { print(a); a = a - 1; }
+    if True { a; } elif False { b; } elif True { a; } else { b; }
+    if True { a; } else { b; }
+    if False { b; } else { print(a); }
 
-                print(a, b, 10, 5, "hello");
-                print();
-                foo();
-                bar(a);
-                fooBar(a, b, c);
-                def barfoo(){}
-                def goofar(a){
-                    print(a);
-                }
-                def doogar(a, b){
-                    print(a);
-                    print(b);
-                }
-                foo.bar;
-                foo.bar();
-                a = foo.bar;
-                a = foo.bar();
-                foo.bar = a;
-    
-                Class Goober {
-                    this.a;
-                    def Goober(a){
-                        this.a = a;
-                    }
-                    def printA(){
-                        print(this.a);
-                    }
-                }
-                goober;
-                Class Fooby{
-                    poopy;
-                    goopy = 5;
-                }
-                a = 5 % 3;
+    print(a, b, 10, 5, "hello");
+    print();
+    foo();
+    bar(a);
+    fooBar(a, b, c);
+    def barfoo(){}
+    def goofar(a){
+        print(a);
+    }
+    def doogar(a, b){
+        print(a);
+        print(b);
+    }
+    foo.bar;
+    foo.bar();
+    a = foo.bar;
+    a = foo.bar();
+    foo.bar = a;
 
-                def func_with_return_stat(arg_a){
-                    arg_a = arg_a + 1;
-                    print(arg_a);
-                    return arg_a;
-                }
+    Class Goober {
+        this.a;
+        def Goober(a){
+            this.a = a;
+        }
+        def printA(){
+            print(this.a);
+        }
+    }
+    goober;
+    Class Fooby{
+        poopy;
+        goopy = 5;
+    }
+    a = 5 % 3;
 
-                import "C:\\a-path\\more-path\\file";
-                """
+    def func_with_return_stat(arg_a){
+        arg_a = arg_a + 1;
+        print(arg_a);
+        return arg_a;
+    }
+
+    import "C:\\a-path\\more-path\\file";
+    Class Outer {
+        a = 0;
+        b = 1;
+        
+        Class Inner {
+            ai = 23;
+            bi = 0;
+        }
+    }
+    print(Outer.Inner.ai);
+    """
                 
     AST = PlaygroundParser(input_str=input_str).program()
     if AST:
