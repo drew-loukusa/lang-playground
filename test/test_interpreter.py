@@ -255,7 +255,7 @@ def test_class_2(capfd):
     print("instance_foo.bar: ", instance_foo.bar);
     print("5 % 3 == ", 5 % 3);
     """
-    
+
     ans_str = """
     Constructor called! I have one arg!
     Assign a to 'class_attr_a' !
@@ -274,5 +274,73 @@ def test_class_2(capfd):
     Set shadowed class attr bar to 15
     instance_foo.bar: 15
     5 % 3 == 2
+    """
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_nested_class_1(capfd):
+    in_str = """
+    Class Outer {
+        a = 0;
+        b = 1;
+        
+        Class Inner {
+            ai = 234;
+            bi = 0;
+
+            def Inner(ai, bi){
+                this.ai = ai;
+                this.bi = bi;
+            }
+        }
+    }
+    print(Outer.Inner.ai);    
+    out_in = Outer.Inner(500, 99);
+    print(out_in);
+
+    out = Outer();
+    in = out.Inner(7, 8);
+    print(out);
+    print(in);
+    """
+    
+    ans_str = """
+    234
+    <Instance of Class: Inner, attrs: {'ai': 500, 'bi': 99} >
+    <Instance of Class: Outer, attrs: {'a': 0, 'b': 1} >
+    <Instance of Class: Inner, attrs: {'ai': 7, 'bi': 8} >
+    """
+    run_stdout_test(capfd, in_str, ans_str)
+
+def test_nested_class_2(capfd):
+    in_str = """
+    Class Outer {
+        a = 0;
+        b = 1;
+        
+        Class Inner {
+            a = 2;
+            b = 3;
+
+            def Inner(ai, bi){
+                a = ai;
+                b = bi;
+            }
+        }
+    }
+    print(Outer.Inner.a);    
+    out_in = Outer.Inner(500, 99);
+    print(out_in);
+
+    out = Outer();
+    in = out.Inner(7, 8);
+    print(out);
+    print(in);
+    """
+    
+    ans_str = """
+    2
+    <Instance of Class: Inner, attrs: {'a': 500, 'b': 99, 'ai': 500, 'bi': 99} >
+    <Instance of Class: Outer, attrs: {'a': 0, 'b': 1} >
+    <Instance of Class: Inner, attrs: {'a': 7, 'b': 8, 'ai': 7, 'bi': 8} >
     """
     run_stdout_test(capfd, in_str, ans_str)

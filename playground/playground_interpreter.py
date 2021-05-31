@@ -418,7 +418,7 @@ class PlaygroundInterpreter:
         if interior_call:
             class_name = obj[args_len].name
             class_def = self.globals.resolve(class_name)
-            
+
         # Create a new copy of the class, and mark it as a copy of the definition
         # aka, an instance of said class
         new_instance = deepcopy(class_def)
@@ -745,16 +745,16 @@ if __name__ == "__main__":
         b = 1;
         
         Class Inner {
-            ai = 234;
-            bi = 0;
+            a = 2;
+            b = 3;
 
             def Inner(ai, bi){
-                this.ai = ai;
-                this.bi = bi;
+                a = ai;
+                b = bi;
             }
         }
     }
-    print(Outer.Inner.ai);    
+    print(Outer.Inner.a);    
     out_in = Outer.Inner(500, 99);
     print(out_in);
 
